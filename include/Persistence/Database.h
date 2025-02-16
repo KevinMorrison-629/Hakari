@@ -9,6 +9,7 @@
 #include "Persistence/Collection/CollectionWrapper.h"
 #include "Persistence/Collection/Card.h"
 #include "Persistence/Collection/Player.h"
+#include "Persistence/Collection/Character.h"
 
 class Database
 {
@@ -20,12 +21,14 @@ public:
     bool Connect(const std::string &connectionString);
 
     Card GetRandomCard();
+    Character GetRandomCharacter();
     Player GetPlayer(const std::string &discordId);
     void UpdatePlayerEntry(const std::string &id, const std::unordered_map<std::string, FieldValue> &fields);
 
 private:
     std::string m_DatabaseName;
 
+    CollectionWrapper<Character> m_Collection_Character;
     CollectionWrapper<Card> m_Collection_Card;
     CollectionWrapper<Player> m_Collection_Player;
 

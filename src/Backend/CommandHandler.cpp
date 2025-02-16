@@ -64,19 +64,16 @@ void CommandHandler::ping(dpp::cluster *bot, const dpp::slashcommand_t &event)
 
 void CommandHandler::drop(dpp::cluster *bot, const dpp::slashcommand_t &event)
 {
-    Card card = m_Database.GetRandomCard();
+    // Card card = m_Database.GetRandomCard();
+    Character character = m_Database.GetRandomCharacter();
 
-    Utils::Logger::Log(Utils::Logger::Type::INFO, card.toJson());
-
-    // std::unordered_map<std::string, FieldValue> fields;
-    // fields["inventory"] = FieldValue(FieldType::FT_ARRAY, {card.getId()});
-    // m_Database.UpdatePlayerEntry(event.command.member.user_id.str(), fields);
+    Utils::Logger::Log(Utils::Logger::Type::INFO, character.toJson());
 
     dpp::message msg;
     dpp::embed embed;
-    embed.title = card.getName();
-    embed.description = card.getCharacterId();
-    // embed.set_image(card.getImageUrl());
+    embed.title = character.getName();
+    embed.description = character.getAnime();
+    embed.set_image("https://raw.githubusercontent.com/KevinMorrison-629/HakaribotImages/refs/heads/main/images/" + character.getRelImgPath());
     msg.add_embed(embed);
     event.reply(msg);
 }

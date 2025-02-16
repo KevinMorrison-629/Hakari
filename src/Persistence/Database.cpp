@@ -27,6 +27,8 @@ bool Database::Connect(const std::string &connectionString)
     m_MongoDB = m_Client["hakari"];
 
     m_Collection_Card = CollectionWrapper<Card>(m_MongoDB["cards"]);
+    m_Collection_Character = CollectionWrapper<Character>(m_MongoDB["characters"]);
+    m_Collection_Player = CollectionWrapper<Player>(m_MongoDB["players"]);
 
     return true;
 }
@@ -34,6 +36,11 @@ bool Database::Connect(const std::string &connectionString)
 Card Database::GetRandomCard()
 {
     return m_Collection_Card.getRandom(1)[0];
+}
+
+Character Database::GetRandomCharacter()
+{
+    return m_Collection_Character.getRandom(1)[0];
 }
 
 Player Database::GetPlayer(const std::string &discordId)
