@@ -6,10 +6,10 @@
 #include <mongocxx/instance.hpp>
 #include <mongocxx/uri.hpp>
 
-#include "Persistence/Collection/CollectionWrapper.h"
 #include "Persistence/Collection/Card.h"
-#include "Persistence/Collection/Player.h"
 #include "Persistence/Collection/Character.h"
+#include "Persistence/Collection/CollectionWrapper.h"
+#include "Persistence/Collection/Player.h"
 
 class Database
 {

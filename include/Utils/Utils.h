@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-#include <random>
 #include <mutex>
+#include <random>
+#include <string>
 
 namespace Utils
 {
@@ -54,4 +54,4 @@ namespace Utils
 
     ErrorCode LogActiveGuilds(const std::vector<std::string> &activeGuilds);
 
-}
+} // namespace Utils

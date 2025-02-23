@@ -1,7 +1,7 @@
 #include "Backend/CommandHandler.h"
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 #include "Persistence/Collection/FieldType.h"
 #include "Utils/Logger.h"
@@ -36,8 +36,7 @@ size_t CommandHandler::RegisterCommands(dpp::cluster *botRef, const dpp::snowfla
     }
     else
     {
-        botRef->guild_bulk_command_create_sync(commands,
-                                               guild_id);
+        botRef->guild_bulk_command_create_sync(commands, guild_id);
     }
 
     return commands.size();
@@ -58,9 +57,7 @@ void CommandHandler::ProcessCommand(dpp::cluster *botRef, const dpp::slashcomman
     Utils::Logger::Log(Utils::Logger::Type::INFO, "Received Command: " + commName);
 }
 
-void CommandHandler::ping(dpp::cluster *bot, const dpp::slashcommand_t &event)
-{
-}
+void CommandHandler::ping(dpp::cluster *bot, const dpp::slashcommand_t &event) {}
 
 void CommandHandler::drop(dpp::cluster *bot, const dpp::slashcommand_t &event)
 {
@@ -73,7 +70,8 @@ void CommandHandler::drop(dpp::cluster *bot, const dpp::slashcommand_t &event)
     dpp::embed embed;
     embed.title = character.getName();
     embed.description = character.getAnime();
-    embed.set_image("https://raw.githubusercontent.com/KevinMorrison-629/HakaribotImages/refs/heads/main/images/" + character.getRelImgPath());
+    embed.set_image("https://raw.githubusercontent.com/KevinMorrison-629/HakaribotImages/refs/heads/main/images/" +
+                    character.getRelImgPath());
     msg.add_embed(embed);
     event.reply(msg);
 }

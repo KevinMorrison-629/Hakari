@@ -33,15 +33,9 @@ bool Database::Connect(const std::string &connectionString)
     return true;
 }
 
-Card Database::GetRandomCard()
-{
-    return m_Collection_Card.getRandom(1)[0];
-}
+Card Database::GetRandomCard() { return m_Collection_Card.getRandom(1)[0]; }
 
-Character Database::GetRandomCharacter()
-{
-    return m_Collection_Character.getRandom(1)[0];
-}
+Character Database::GetRandomCharacter() { return m_Collection_Character.getRandom(1)[0]; }
 
 Player Database::GetPlayer(const std::string &discordId)
 {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include "Persistence/Collection/CollectionEntry.h"
+#include <string>
 
 class Card : public CollectionEntry
 {
@@ -9,13 +9,8 @@ public:
     Card() = default;
 
     // Constructor that sets all fields using our generic setters.
-    Card(const std::string &_id,
-         const std::string &_name,
-         const std::string &_characterId,
-         const std::string &_setId,
-         const std::string &_tierId,
-         const std::string &_imageUrl,
-         int32_t _numAcquired)
+    Card(const std::string &_id, const std::string &_name, const std::string &_characterId, const std::string &_setId,
+         const std::string &_tierId, const std::string &_imageUrl, int32_t _numAcquired)
     {
         setId(_id);
         setName(_name);

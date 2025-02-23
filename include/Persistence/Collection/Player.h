@@ -1,8 +1,8 @@
 #pragma once
 
+#include "Persistence/Collection/CollectionEntry.h"
 #include <string>
 #include <vector>
-#include "Persistence/Collection/CollectionEntry.h"
 
 class Player : public CollectionEntry
 {
@@ -10,16 +10,9 @@ public:
     Player() = default;
 
     // Constructor to initialize all fields
-    Player(const std::string &_id,
-           const std::string &_discordId,
-           const std::string &_avatarUrl,
-           int64_t _essence,
-           int64_t _gems,
-           const std::vector<std::string> &_inventory,
-           const std::vector<std::string> &_wishlist,
-           int32_t _remainingRolls,
-           int64_t _lastRollTime,
-           const std::vector<std::string> &_cardCollection,
+    Player(const std::string &_id, const std::string &_discordId, const std::string &_avatarUrl, int64_t _essence,
+           int64_t _gems, const std::vector<std::string> &_inventory, const std::vector<std::string> &_wishlist,
+           int32_t _remainingRolls, int64_t _lastRollTime, const std::vector<std::string> &_cardCollection,
            int32_t _prestigeLevel)
     {
         setId(_id);

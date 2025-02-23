@@ -1,17 +1,17 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <cstdint>
 
 // Include MongoDB C++ driver headers for BSON building.
-#include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/builder/stream/array.hpp>
-#include <bsoncxx/types.hpp>
-#include <bsoncxx/oid.hpp>
+#include <bsoncxx/builder/stream/document.hpp>
 #include <bsoncxx/json.hpp>
+#include <bsoncxx/oid.hpp>
+#include <bsoncxx/types.hpp>
 
 #include "Persistence/Collection/FieldType.h"
 
@@ -20,19 +20,18 @@ struct FieldValue;
 
 // Define a variant to hold different field types.
 // (For example: a MongoDB ObjectId, numbers, booleans, strings, etc.)
-using FieldVariant = std::variant<
-    std::vector<FieldValue>,                    // For FT_ARRAY
-    std::vector<uint8_t>,                       // For FT_BINARY
-    bool,                                       // For FT_BOOLEAN
-    int32_t,                                    // For FT_INT_32
-    int64_t,                                    // For FT_INT_64
-    double,                                     // For FT_DOUBLE
-    std::nullptr_t,                             // For FT_NULL
-    std::string,                                // For FT_STRING, FT_CODE, FT_OBJECT_ID, etc.
-    bsoncxx::types::b_date,                     // FT_DATE
-    bsoncxx::types::b_timestamp,                // FT_TIMESTAMP
-    std::unordered_map<std::string, FieldValue> // For FT_OBJECT
-    >;
+using FieldVariant = std::variant<std::vector<FieldValue>,                    // For FT_ARRAY
+                                  std::vector<uint8_t>,                       // For FT_BINARY
+                                  bool,                                       // For FT_BOOLEAN
+                                  int32_t,                                    // For FT_INT_32
+                                  int64_t,                                    // For FT_INT_64
+                                  double,                                     // For FT_DOUBLE
+                                  std::nullptr_t,                             // For FT_NULL
+                                  std::string,                                // For FT_STRING, FT_CODE, FT_OBJECT_ID, etc.
+                                  bsoncxx::types::b_date,                     // FT_DATE
+                                  bsoncxx::types::b_timestamp,                // FT_TIMESTAMP
+                                  std::unordered_map<std::string, FieldValue> // For FT_OBJECT
+                                  >;
 
 // A field’s value includes its type and the actual value.
 struct FieldValue
@@ -63,10 +62,7 @@ public:
     virtual ~CollectionEntry() = default;
 
     // Check if the entry has a field.
-    bool hasField(const std::string &fieldName) const
-    {
-        return fields.find(fieldName) != fields.end();
-    }
+    bool hasField(const std::string &fieldName) const { return fields.find(fieldName) != fields.end(); }
 
     // Retrieve a field’s value (or nullptr if missing).
     const FieldValue *getField(const std::string &fieldName) const
@@ -78,14 +74,10 @@ public:
     }
 
     // Set (or update) a field’s value.
-    void setField(const std::string &fieldName, const FieldValue &fieldValue)
-    {
-        fields[fieldName] = fieldValue;
-    }
+    void setField(const std::string &fieldName, const FieldValue &fieldValue) { fields[fieldName] = fieldValue; }
 
     // Generic getter template.
-    template <typename T>
-    T getValue(const std::string &field, T defaultValue = T()) const
+    template <typename T> T getValue(const std::string &field, T defaultValue = T()) const
     {
         if (auto f = getField(field))
             return std::get<T>(f->value);
@@ -93,17 +85,13 @@ public:
     }
 
     // Generic setter template.
-    template <typename T>
-    void setValue(const std::string &field, FieldType type, const T &value)
+    template <typename T> void setValue(const std::string &field, FieldType type, const T &value)
     {
         setField(field, FieldValue{type, value});
     }
 
     // For debugging: convert the document to a JSON-like string.
-    std::string toJson() const
-    {
-        return bsoncxx::to_json(toBson());
-    }
+    std::string toJson() const { return bsoncxx::to_json(toBson()); }
 
     // Convert the in-memory document into a BSON document.
     bsoncxx::document::value toBson() const
@@ -134,9 +122,7 @@ public:
     //---------------------------------------------------------------
 
     // Append a FieldValue to a document builder given a key.
-    static void appendFieldValue(bsoncxx::builder::stream::document &builder,
-                                 const std::string &key,
-                                 const FieldValue &fv)
+    static void appendFieldValue(bsoncxx::builder::stream::document &builder, const std::string &key, const FieldValue &fv)
     {
         using namespace bsoncxx::builder::stream;
         switch (fv.type)
@@ -185,8 +171,7 @@ public:
     }
 
     // Overload: Append a FieldValue to an array builder.
-    static void appendFieldValue(bsoncxx::builder::stream::array &arr_builder,
-                                 const FieldValue &fv)
+    static void appendFieldValue(bsoncxx::builder::stream::array &arr_builder, const FieldValue &fv)
     {
         using namespace bsoncxx::builder::stream;
         switch (fv.type)

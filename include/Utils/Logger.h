@@ -31,6 +31,6 @@ namespace Utils
             std::cout << "[" << typestring << "]: " << message << std::endl;
         }
 
-    }
+    } // namespace Logger
 
 } // namespace Utils

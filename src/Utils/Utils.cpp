@@ -1,7 +1,7 @@
 #include "Utils/Utils.h"
 
-#include <regex>
 #include <fstream>
+#include <regex>
 
 namespace Utils
 {
@@ -26,10 +26,7 @@ namespace Utils
         return std::regex_replace(s, pattern, " ");
     }
 
-    std::string trim(const std::string &s)
-    {
-        return replaceWhitespaceWithSpace(rtrim(ltrim(s)));
-    }
+    std::string trim(const std::string &s) { return replaceWhitespaceWithSpace(rtrim(ltrim(s))); }
 
     ErrorCode LoadToken(const std::string &filename, std::string &token)
     {
@@ -80,4 +77,4 @@ namespace Utils
 
         return ErrorCode::SUCCESS;
     }
-}
+} // namespace Utils

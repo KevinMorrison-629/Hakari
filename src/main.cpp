@@ -2,8 +2,8 @@
 #include <iostream>
 
 #include "HakariBot.h"
-#include "Utils/Utils.h"
 #include "Utils/Logger.h"
+#include "Utils/Utils.h"
 
 #include <dpp/dpp.h>
 

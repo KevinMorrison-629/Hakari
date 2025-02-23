@@ -1,31 +1,27 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include "Persistence/Collection/CollectionEntry.h"
 
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
-#include <mongocxx/uri.hpp>
-#include <mongocxx/database.hpp>
-#include <mongocxx/collection.hpp>
 #include <bsoncxx/json.hpp>
 #include <iostream>
+#include <mongocxx/client.hpp>
+#include <mongocxx/collection.hpp>
+#include <mongocxx/database.hpp>
+#include <mongocxx/instance.hpp>
+#include <mongocxx/uri.hpp>
 
-template <typename T, typename std::enable_if_t<std::is_base_of<CollectionEntry, T>::value, int> = 0>
-class CollectionWrapper
+template <typename T, typename std::enable_if_t<std::is_base_of<CollectionEntry, T>::value, int> = 0> class CollectionWrapper
 {
 public:
     CollectionWrapper() = default;
     ~CollectionWrapper() = default;
 
     // Constructor accepting connection details.
-    CollectionWrapper(const mongocxx::v_noabi::collection &collection)
-    {
-        m_Collection = collection;
-    }
+    CollectionWrapper(const mongocxx::v_noabi::collection &collection) { m_Collection = collection; }
 
     // Insert an entry into the simulated collection.
     void insert(const T &entry)
