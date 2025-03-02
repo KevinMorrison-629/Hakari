@@ -2,6 +2,9 @@
 
 #include "Backend/InteractionManager.h"
 
+#include "Backend/Commands/DropCommand.h"
+#include "Backend/Commands/PingCommand.h"
+
 class CommandHandler : InteractionManager
 {
 public:
@@ -19,9 +22,10 @@ public:
 private:
     struct SlashCommandEntry
     {
-        SlashCommandEntry(const std::string &name,
-                          const std::function<void(dpp::cluster *bot, const dpp::slashcommand_t &event)> &function,
-                          const std::string &description)
+        SlashCommandEntry(
+            const std::string &name,
+            const std::function<void(dpp::cluster *bot, const dpp::slashcommand_t &event, Database &db)> &function,
+            const std::string &description)
         {
             m_name = name;
             m_function = function;
@@ -30,14 +34,14 @@ private:
 
         std::string m_name;
         std::string m_description;
-        std::function<void(dpp::cluster *bot, const dpp::slashcommand_t &event)> m_function;
+        std::function<void(dpp::cluster *bot, const dpp::slashcommand_t &event, Database &db)> m_function;
     };
 
-    static void ping(dpp::cluster *bot, const dpp::slashcommand_t &event);
+    // static void ping(dpp::cluster *bot, const dpp::slashcommand_t &event);
     // static void verify(dpp::cluster &bot, const dpp::slashcommand_t &event);
     // static void vote(dpp::cluster &bot, const dpp::slashcommand_t &event);
     // static void daily(dpp::cluster &bot, const dpp::slashcommand_t &event);
-    static void drop(dpp::cluster *bot, const dpp::slashcommand_t &event);
+    // static void drop(dpp::cluster *bot, const dpp::slashcommand_t &event);
     // static void collection(dpp::cluster &bot, const dpp::slashcommand_t &event);
     // static void view(dpp::cluster &bot, const dpp::slashcommand_t &event);
     // static void search(dpp::cluster &bot, const dpp::slashcommand_t &event);
@@ -59,11 +63,11 @@ private:
 
     // Map of command names to their handler functions.
     std::vector<SlashCommandEntry> m_CommandMap = {
-        SlashCommandEntry("ping", ping, "Send Message and Ask for Response"),
+        SlashCommandEntry("ping", Backend::Commands::ping, "Send Message and Ask for Response"),
         // SlashCommandEntry("verify", verify, "Verify account. \"Do you want to play a game?\""),
         // SlashCommandEntry("vote", vote, "Vote for Hakaribot! (we might bribe you with some gemstones. . .)"),
         // SlashCommandEntry("daily", daily, "Here's your daily allowance (50-150 essence)"),
-        SlashCommandEntry("drop", drop, "Drop a set of cards here. Get em Fast!"),
+        SlashCommandEntry("drop", Backend::Commands::drop, "Drop a set of cards here. Get em Fast!"),
         // SlashCommandEntry("collection", collection, "Let's take a look at that collection. IS THAT A LEGENDARY???"),
         // SlashCommandEntry("view", view, "Let me take a better look at that one card . ."),
         // SlashCommandEntry("search", search, "Look at the stats for a particular character/set/series/movie/.../whatever"),
