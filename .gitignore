@@ -1,3 +1,4 @@
 build/
 bot_token.txt
 ActiveGuilds.txt
+scripts/venv/
