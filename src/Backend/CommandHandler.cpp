@@ -3,7 +3,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "Persistence/Collection/FieldType.h"
+#include "Persistence/Field.h"
 #include "Utils/Logger.h"
 
 void CommandHandler::UnregisterCommands(dpp::cluster *botRef, const dpp::snowflake &guild_id)
@@ -50,28 +50,9 @@ void CommandHandler::ProcessCommand(dpp::cluster *botRef, const dpp::slashcomman
     {
         if (comm.m_name == commName)
         {
-            comm.m_function(botRef, event);
+            comm.m_function(botRef, event, m_Database);
         }
     }
 
     Utils::Logger::Log(Utils::Logger::Type::INFO, "Received Command: " + commName);
-}
-
-void CommandHandler::ping(dpp::cluster *bot, const dpp::slashcommand_t &event) {}
-
-void CommandHandler::drop(dpp::cluster *bot, const dpp::slashcommand_t &event)
-{
-    // Card card = m_Database.GetRandomCard();
-    Character character = m_Database.GetRandomCharacter();
-
-    Utils::Logger::Log(Utils::Logger::Type::INFO, character.toJson());
-
-    dpp::message msg;
-    dpp::embed embed;
-    embed.title = character.getName();
-    embed.description = character.getAnime();
-    embed.set_image("https://raw.githubusercontent.com/KevinMorrison-629/HakaribotImages/refs/heads/main/images/" +
-                    character.getRelImgPath());
-    msg.add_embed(embed);
-    event.reply(msg);
 }

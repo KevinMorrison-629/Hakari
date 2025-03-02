@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Persistence/Collection/CollectionEntry.h"
+#include "Persistence/CollectionEntry.h"
 #include <string>
 
 class Character : public CollectionEntry
@@ -9,10 +9,11 @@ public:
     Character() = default;
 
     // Constructor that sets all fields using our generic setters.
-    Character(const std::string &_id, const std::string &_name, const std::string &_anime, const std::string &_description,
-              const std::string &_relPath, const std::vector<std::string> &_images)
+    Character(const std::string &_id, const std::string &_uuid, const std::string &_name, const std::string &_anime,
+              const std::string &_description, const std::string &_relPath, const std::vector<std::string> &_images)
     {
         setId(_id);
+        setUuid(_uuid);
         setName(_name);
         setAnime(_anime);
         setDescription(_description);
@@ -22,6 +23,7 @@ public:
 
     // Specific Getters
     std::string getId() const { return getValue<std::string>("_id"); }
+    std::string getUuid() const { return getValue<std::string>("uuid"); }
     std::string getName() const { return getValue<std::string>("name"); }
     std::string getAnime() const { return getValue<std::string>("anime"); }
     std::string getRelImgPath() const { return getValue<std::string>("relative_path"); }
@@ -43,6 +45,7 @@ public:
 
     // Specific Setters
     void setId(const std::string &id) { setValue<std::string>("_id", FieldType::FT_OBJECT_ID, id); }
+    void setUuid(const std::string &uuid) { setValue<std::string>("uuid", FieldType::FT_STRING, uuid); }
     void setName(const std::string &name) { setValue<std::string>("name", FieldType::FT_STRING, name); }
     void setAnime(const std::string &anime) { setValue<std::string>("anime", FieldType::FT_STRING, anime); }
     void setDescription(const std::string &desc) { setValue<std::string>("description", FieldType::FT_STRING, desc); }
