@@ -14,6 +14,7 @@
 #include <bsoncxx/types.hpp>
 
 #include "Persistence/Field.h"
+#include "Utils/Logger.h"
 
 class CollectionEntry
 {
@@ -58,7 +59,14 @@ public:
         bsoncxx::builder::basic::document doc{};
         for (const auto &pair : fields)
         {
-            doc.append(MakeDocument(pair.first, pair.second));
+            try
+            {
+                doc.append(MakeDocument(pair.first, pair.second));
+            }
+            catch (const std::runtime_error &error)
+            {
+                Utils::Logger::Log(Utils::Logger::Type::FATAL_ERROR, error.what());
+            }
         }
         return doc.extract();
     }

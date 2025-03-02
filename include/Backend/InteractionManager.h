@@ -11,8 +11,7 @@ public:
     ~InteractionManager() = default;
 
 protected:
-    // static bool IsValidatedUser(const dpp::snowflake &discord_uid);
-    // static std::string GenerateUniqueCode();
+    static void MakeValidatedUser(const dpp::snowflake &discord_uid);
 
 protected:
     static Database m_Database;

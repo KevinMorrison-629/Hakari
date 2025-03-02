@@ -50,6 +50,7 @@ void CommandHandler::ProcessCommand(dpp::cluster *botRef, const dpp::slashcomman
     {
         if (comm.m_name == commName)
         {
+            MakeValidatedUser(event.command.member.user_id);
             comm.m_function(botRef, event, m_Database);
         }
     }

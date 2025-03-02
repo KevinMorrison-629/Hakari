@@ -10,13 +10,12 @@ public:
     Player() = default;
 
     // Constructor to initialize all fields
-    Player(const std::string &_id, const std::string &_uuid, const std::string &_avatarUrl, int64_t _essence, int64_t _gems,
+    Player(const std::string &_id, const std::string &_uuid, int64_t _essence, int64_t _gems,
            const std::vector<std::string> &_inventory, const std::vector<std::string> &_wishlist, int32_t _remainingRolls,
            int64_t _lastRollTime, const std::vector<std::string> &_cardCollection, int32_t _prestigeLevel)
     {
         setId(_id);
         setUuid(_uuid);
-        setAvatarUrl(_avatarUrl);
         setEssence(_essence);
         setGems(_gems);
         setInventory(_inventory);
@@ -30,7 +29,6 @@ public:
     // Specific Getters
     std::string getId() const { return getValue<std::string>("_id"); }
     std::string GetUuidId() const { return getValue<std::string>("uuid"); }
-    std::string getAvatarUrl() const { return getValue<std::string>("avatar_url"); }
     int64_t getEssence() const { return getValue<int64_t>("essence", 0); }
     int64_t getGems() const { return getValue<int64_t>("gems", 0); }
     int32_t getRemainingRolls() const { return getValue<int32_t>("remaining_rolls", 0); }
@@ -43,11 +41,10 @@ public:
     // Specific Setters
     void setId(const std::string &id) { setValue<std::string>("_id", FieldType::FT_OBJECT_ID, id); }
     void setUuid(const std::string &uuid) { setValue<std::string>("uuid", FieldType::FT_STRING, uuid); }
-    void setAvatarUrl(const std::string &url) { setValue<std::string>("avatar_url", FieldType::FT_STRING, url); }
     void setEssence(int64_t essence) { setValue<int64_t>("essence", FieldType::FT_INT_64, essence); }
     void setGems(int64_t gems) { setValue<int64_t>("gems", FieldType::FT_INT_64, gems); }
     void setRemainingRolls(int32_t rolls) { setValue<int32_t>("remaining_rolls", FieldType::FT_INT_32, rolls); }
-    void setLastRollTime(int64_t timestamp) { setValue<int64_t>("last_roll_time", FieldType::FT_TIMESTAMP, timestamp); }
+    void setLastRollTime(int64_t timestamp) { setValue<int64_t>("last_roll_time", FieldType::FT_INT_64, timestamp); }
     void setPrestigeLevel(int32_t level) { setValue<int32_t>("prestige_level", FieldType::FT_INT_32, level); }
 
     void setInventory(const std::vector<std::string> &inventory) { setObjectIdArray("inventory", inventory); }

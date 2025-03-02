@@ -41,6 +41,15 @@ void Backend::Commands::drop(dpp::cluster *bot, const dpp::slashcommand_t &event
             // Add card to player inventory
             db.m_Collection_Player.PushToArray(playerMatch, "collection",
                                                FieldValue(FieldType::FT_OBJECT_ID, _id.value().to_string()));
+
+            // Update the number of issue this card has had
+            std::unordered_map<std::string, FieldValue> cardMatch = {
+                {"_id", FieldValue(FieldType::FT_OBJECT_ID, card.getId())}};
+            if (db.m_Collection_Card.UpdateEntry(
+                    cardMatch, {{"num_acquired", FieldValue(FieldType::FT_INT_32, card.getNumAcquired() + 1)}}))
+            {
+                Utils::Logger::Log(Utils::Logger::Type::INFO, "Updated Entry (num_aquired)");
+            }
         }
 
         // Create Embed
@@ -48,8 +57,10 @@ void Backend::Commands::drop(dpp::cluster *bot, const dpp::slashcommand_t &event
         dpp::embed embed;
         embed.title = card.getName();
         embed.description = std::to_string(card.getTierId());
-        embed.set_image("https://raw.githubusercontent.com/KevinMorrison-629/HakaribotImages/refs/heads/main/images/" +
-                        card.getImageUrl());
+        std::string img_url =
+            "https://kevinmorrison-629.github.io/Hakari/images/" + card.getCharacterId() + "/" + card.getImageUrl();
+
+        embed.set_image(img_url);
         msg.add_embed(embed);
         event.reply(msg);
     }

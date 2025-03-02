@@ -64,7 +64,7 @@ for character in char_collection.find():
             "character_id" : char_id,
             "set_id" : "1",
             "tier" : getTierFromName(image),
-            "image_url" : str(char_id) + "\\" + image,
+            "image_url" : image,
             "num_acquired" : 0
         }
 

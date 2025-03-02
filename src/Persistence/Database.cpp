@@ -28,7 +28,7 @@ bool Database::Connect(const std::string &connectionString)
     m_MongoDB = m_Client["hakari"];
 
     m_Collection_Card = CollectionWrapper<Card>(m_MongoDB["cards"]);
-    m_Collection_Card = CollectionWrapper<Card>(m_MongoDB["card_objects"]);
+    m_Collection_CardObject = CollectionWrapper<CardObject>(m_MongoDB["card_objects"]);
     m_Collection_Character = CollectionWrapper<Character>(m_MongoDB["characters"]);
     m_Collection_Player = CollectionWrapper<Player>(m_MongoDB["players"]);
 
