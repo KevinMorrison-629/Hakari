@@ -55,6 +55,7 @@ void Backend::Commands::drop(dpp::cluster *bot, const dpp::slashcommand_t &event
     }
     else
     {
+        event.reply("Could not find any cards");
     }
 }
 
