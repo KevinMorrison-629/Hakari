@@ -2,6 +2,7 @@
 
 #include "Backend/InteractionManager.h"
 
+#include "Backend/Commands/CollectionCommand.h"
 #include "Backend/Commands/DropCommand.h"
 #include "Backend/Commands/PingCommand.h"
 
@@ -68,7 +69,8 @@ private:
         // SlashCommandEntry("vote", vote, "Vote for Hakaribot! (we might bribe you with some gemstones. . .)"),
         // SlashCommandEntry("daily", daily, "Here's your daily allowance (50-150 essence)"),
         SlashCommandEntry("drop", Backend::Commands::drop, "Drop a set of cards here. Get em Fast!"),
-        // SlashCommandEntry("collection", collection, "Let's take a look at that collection. IS THAT A LEGENDARY???"),
+        SlashCommandEntry("collection", Backend::Commands::collection,
+                          "Let's take a look at that collection. IS THAT A LEGENDARY???"),
         // SlashCommandEntry("view", view, "Let me take a better look at that one card . ."),
         // SlashCommandEntry("search", search, "Look at the stats for a particular character/set/series/movie/.../whatever"),
         // SlashCommandEntry("wishlist", wishlist, "Who do you *really* want?"),

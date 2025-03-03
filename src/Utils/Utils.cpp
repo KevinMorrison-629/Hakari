@@ -46,6 +46,7 @@ Utils::ErrorCode Utils::LoadToken(const std::string &filename, std::string &toke
 }
 
 uint32_t Utils::RandomRoll() { return static_cast<uint32_t>(random_roll_dist(gen)); }
+uint32_t Utils::RandomStar() { return static_cast<uint32_t>(random_star_dist(gen)); }
 
 std::string Utils::GenerateRandomCode(uint8_t length)
 {

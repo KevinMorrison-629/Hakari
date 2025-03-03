@@ -41,6 +41,20 @@ def getTierFromName(name :str) -> int:
         return 3
     elif "set_1" in name:
         return 4
+    
+def getMultipleFromTier(tier : int):
+    if tier == 0:
+        return 1
+    elif tier == 1:
+        return 2
+    elif tier == 2:
+        return 3
+    elif tier == 3:
+        return 5
+    elif tier == 4:
+        return 7
+    elif tier == 5:
+        return 11
 
 
 IMAGE_LIST = ["common.png", "rare.png", "epic.png", "illustration.gif", "set_1.gif"]
@@ -56,16 +70,18 @@ card_collection = db["cards"]
 
 for character in char_collection.find():
     char_id = character["_id"]
+    rank = character["rank"]
     
     for image in IMAGE_LIST:
+        tier = getTierFromName(image)
         card_entry = {
             "uuid" : get_random_unique_code(card_collection),
             "name" : character["name"],
             "character_id" : char_id,
             "set_id" : "1",
-            "tier" : getTierFromName(image),
+            "tier" : tier,
             "image_url" : image,
-            "num_acquired" : 0
+            "num_acquired" : 0,
         }
 
         card_collection.insert_one(card_entry)

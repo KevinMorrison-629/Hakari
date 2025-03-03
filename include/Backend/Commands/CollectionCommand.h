@@ -10,9 +10,6 @@ namespace Backend::Commands
     /// @brief
     /// @param bot
     /// @param event
-    void drop(dpp::cluster *bot, const dpp::slashcommand_t &event, Database &db);
-
-    Constants::CardTier GetRandomCardTier();
-    int32_t GetRandomStarLevel();
+    void collection(dpp::cluster *bot, const dpp::slashcommand_t &event, Database &db);
 
 } // namespace Backend::Commands

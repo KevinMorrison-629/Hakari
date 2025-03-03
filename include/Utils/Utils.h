@@ -14,6 +14,7 @@ namespace Utils
     static std::mt19937 gen(rd());
     static std::mutex utilsMutex;
     inline static std::uniform_int_distribution<uint32_t> random_roll_dist(0, Constants::TIER_RANGE_EXCLUSIVE);
+    inline static std::uniform_int_distribution<uint32_t> random_star_dist(0, Constants::STAR_RANGE_FIVE);
     inline static std::uniform_int_distribution<uint64_t> random_code_dist(0, VALID_CODE_CHARACTERS.size());
 
     /// @brief Error Structure
@@ -54,6 +55,7 @@ namespace Utils
     ErrorCode LoadToken(const std::string &filename, std::string &token);
 
     uint32_t RandomRoll();
+    uint32_t RandomStar();
 
     std::string GenerateRandomCode(uint8_t length);
 

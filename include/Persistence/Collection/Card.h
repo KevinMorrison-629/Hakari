@@ -10,7 +10,7 @@ public:
 
     // Constructor that sets all fields using our generic setters.
     Card(const std::string &_id, const std::string &_uuid, const std::string &_name, const std::string &_characterId,
-         const std::string &_setId, const int32_t &_tier, const std::string &_imageUrl, int32_t _numAcquired)
+         const std::string &_setId, const int32_t &_tier, const std::string &_imageUrl, const int32_t _numAcquired)
     {
         setId(_id);
         setUuid(_uuid);

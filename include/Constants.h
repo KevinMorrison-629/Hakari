@@ -36,6 +36,13 @@ namespace Constants
     constexpr uint32_t TIER_RANGE_SERIES = 999'999'999U;       ///< @brief Roll Rate | 0.05%
     constexpr uint32_t TIER_RANGE_EXCLUSIVE = 1'000'000'000U;  ///< @brief Roll Rate | 0.0000001% (1 / 1 billion)
 
+    constexpr uint32_t STAR_RANGE_ZERO = 940'000U;   ///< @brief
+    constexpr uint32_t STAR_RANGE_ONE = 995'000U;    ///< @brief
+    constexpr uint32_t STAR_RANGE_TWO = 999'500U;    ///< @brief
+    constexpr uint32_t STAR_RANGE_THREE = 999'950U;  ///< @brief
+    constexpr uint32_t STAR_RANGE_FOUR = 999'999U;   ///< @brief
+    constexpr uint32_t STAR_RANGE_FIVE = 1'000'000U; ///< @brief
+
     /// @note The Exclusive Card Tier allows for a player to request a given character/image to be featured on this card.
     /// This card cannot be reforged
 

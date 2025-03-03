@@ -89,6 +89,33 @@ public:
         return entries;
     }
 
+    std::optional<T> GetOne(const std::unordered_map<std::string, FieldValue> &fields = {})
+    {
+        mongocxx::pipeline pipeline{};
+
+        // If fields are provided, apply a $match filter
+        if (!fields.empty())
+        {
+            bsoncxx::builder::basic::document match_stage;
+            for (const auto &[key, value] : fields)
+            {
+                match_stage.append(MakeDocument(key, value));
+            }
+            pipeline.match(match_stage.view());
+        }
+
+        pipeline.sample(1);
+        auto cursor = m_Collection.aggregate(pipeline, mongocxx::options::aggregate{});
+
+        for (auto &&doc : cursor)
+        {
+            T entry;
+            entry.fromBson(doc);
+            return entry;
+        }
+        return std::nullopt;
+    }
+
     std::optional<bsoncxx::oid> Add(T entry)
     {
         try
@@ -212,15 +239,25 @@ public:
         }
     }
 
-    std::vector<T> GetAllSorted(const std::string &sortField, bool ascending = true)
+    std::vector<T> GetAllSorted(const std::unordered_map<std::string, FieldValue> &match, const std::string &sortField,
+                                bool ascending = true)
     {
-        mongocxx::options::find opts;
+        mongocxx::pipeline pipeline{};
+        // If fields are provided, apply a $match filter
+        if (!match.empty())
+        {
+            bsoncxx::builder::basic::document match_stage;
+            for (const auto &[key, value] : match)
+            {
+                match_stage.append(MakeDocument(key, value));
+            }
+            pipeline.match(match_stage.view());
+        }
+
         bsoncxx::builder::basic::document sort_doc;
         sort_doc.append(bsoncxx::builder::basic::kvp(sortField, ascending ? 1 : -1));
-
-        opts.sort(sort_doc.view());
-
-        auto cursor = m_Collection.find({}, opts);
+        pipeline.sort(sort_doc.view());
+        auto cursor = m_Collection.aggregate(pipeline, mongocxx::options::aggregate());
 
         std::vector<T> entries;
         for (auto &&doc : cursor)
