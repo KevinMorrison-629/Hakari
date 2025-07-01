@@ -2,6 +2,8 @@
     "name": "hakari",
     "version-string": "0.0.1",
     "dependencies": [
-        "gamenetworkingsockets"
+        "gamenetworkingsockets",
+        "dpp",
+        "mongo-cxx-driver"
     ]
 }

@@ -20,7 +20,11 @@ target_include_directories(${CLIENT_NAME} PRIVATE
     ${HEADERS}
 )
 
+# Find the packages provided by vcpkg.
+find_package(dpp CONFIG REQUIRED)
+
 # Link server executable against dependencies
 target_link_libraries(${CLIENT_NAME} PRIVATE
     core_lib
+    dpp::dpp
 )

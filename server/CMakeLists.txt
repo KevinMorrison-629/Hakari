@@ -9,6 +9,9 @@ file(GLOB_RECURSE HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
 )
 
+# # Find the packages provided by vcpkg.
+# find_package(mongocxx CONFIG REQUIRED)
+
 # Create executable with given src files
 add_executable(server
     main_server.cpp

@@ -1,20 +1,38 @@
-#include "core/ServerManager.h"
+#include "core/net/ServerManager.h"
+
+#include "core/persistence/Database.h"
+#include "core/persistence/collection/Card.h"
+#include "core/persistence/QueryBuilder.h"
 
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-int main() {
-    ServerManager myServer;
+int main()
+{
+    Core::Net::ServerManager myServer;
 
-    if (!myServer.Start(9000)) {
+    Core::Persistence::Database::instance().Connect("mongodb://localhost:27017/?maxPoolSize=50", "hakaridb");
+
+    if (!myServer.Start(9000))
+    {
         std::cerr << "Failed to start server." << std::endl;
         return 1;
     }
 
+    auto db_client = Core::Persistence::Database::instance().getClient();
+
+    auto results = db_client.Cards.GetAll({});
+    if (!results.empty())
+    {
+        Core::Persistence::Collection::Card p = results.front();
+        std::cout << p.getName() << std::endl;
+    }
+
     std::cout << "Server started. Press Ctrl+C to exit." << std::endl;
 
-    while (true) {
+    while (true)
+    {
         myServer.Poll();
         myServer.ReceiveMessages();
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
