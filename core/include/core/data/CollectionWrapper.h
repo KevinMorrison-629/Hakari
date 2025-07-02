@@ -98,23 +98,19 @@ namespace Core::Data
                 pipeline.match(match_stage.view());
             }
             // Add a $limit stage to cap the number of results if max_count is less than default or a very large number.
-            // Note: The original code used batch_size, which is different from limiting total results.
-            // For limiting total results, $limit is more appropriate in the pipeline.
-            // However, if the intent was to control cursor batching, then options.batch_size() is correct.
-            // Assuming max_count is for limiting results here.
-            if (max_count > 0) { // Ensure max_count is positive
-                 pipeline.limit(static_cast<int64_t>(max_count));
+            if (max_count > 0)
+            { // Ensure max_count is positive
+                pipeline.limit(static_cast<int64_t>(max_count));
             }
-
 
             mongocxx::options::aggregate options = mongocxx::options::aggregate();
             // options.batch_size(max_count); // This controls cursor batching, not total document limit.
-                                            // If max_count is truly a limit, it should be in the pipeline.
+            // If max_count is truly a limit, it should be in the pipeline.
 
             auto cursor = m_Collection.aggregate(pipeline, options);
 
             std::vector<T> entries;
-            // Consider reserving space if max_count is reasonably small: entries.reserve(max_count);
+            entries.reserve(max_count);
             for (auto &&doc : cursor)
             {
                 T entry;
@@ -139,7 +135,8 @@ namespace Core::Data
                 if (result && result->result().inserted_count() > 0)
                 {
                     // Ensure the inserted_id is indeed an OID before trying to get it.
-                    if (result->inserted_id().type() == bsoncxx::type::k_oid) {
+                    if (result->inserted_id().type() == bsoncxx::type::k_oid)
+                    {
                         return result->inserted_id().get_oid().value;
                     }
                 }
@@ -167,11 +164,11 @@ namespace Core::Data
                     std::cerr << "Error: Match criteria cannot be empty for UpdateEntry." << std::endl;
                     return false;
                 }
-                if (fields.empty()){
-                     std::cerr << "Warning: Update fields are empty, no update will be performed." << std::endl;
+                if (fields.empty())
+                {
+                    std::cerr << "Warning: Update fields are empty, no update will be performed." << std::endl;
                     return false; // Or true, if no error but no change is considered success.
                 }
-
 
                 bsoncxx::builder::basic::document filter_doc;
                 for (const auto &[key, value] : match)
@@ -187,10 +184,10 @@ namespace Core::Data
                 bsoncxx::builder::basic::document update_doc;
                 update_doc.append(bsoncxx::builder::basic::kvp("$set", update_payload_doc.view()));
 
-
                 auto result = m_Collection.update_many(filter_doc.view(), update_doc.view());
 
-                if (result) { // Result object exists
+                if (result)
+                { // Result object exists
                     // Consider result->matched_count() if you want to know if anything matched.
                     return result->modified_count() > 0;
                 }
@@ -241,7 +238,8 @@ namespace Core::Data
             try
             {
                 bsoncxx::builder::basic::document filter_doc;
-                if (!match.empty()) {
+                if (!match.empty())
+                {
                     for (const auto &[key, value] : match)
                     {
                         AppendToDocument(filter_doc, key, value);
@@ -293,7 +291,8 @@ namespace Core::Data
         {
             try
             {
-                 if (match.empty()) {
+                if (match.empty())
+                {
                     std::cerr << "Error: Match criteria cannot be empty for PushToArray." << std::endl;
                     return false;
                 }
@@ -318,7 +317,6 @@ namespace Core::Data
                 bsoncxx::builder::basic::document update_doc;
                 update_doc.append(bsoncxx::builder::basic::kvp("$push", push_payload_doc.view()));
 
-
                 auto result = m_Collection.update_one(filter_doc.view(), update_doc.view());
                 return result && result->modified_count() > 0;
             }
@@ -340,7 +338,8 @@ namespace Core::Data
         {
             try
             {
-                if (match.empty()) {
+                if (match.empty())
+                {
                     std::cerr << "Error: Match criteria cannot be empty for PullFromArray." << std::endl;
                     return false;
                 }
@@ -376,7 +375,8 @@ namespace Core::Data
         {
             try
             {
-                 if (match.empty()) {
+                if (match.empty())
+                {
                     std::cerr << "Error: Match criteria cannot be empty for DeleteArrayField." << std::endl;
                     return false;
                 }

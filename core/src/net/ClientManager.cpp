@@ -93,7 +93,7 @@ namespace Core::Net
             /// @brief Logs disconnection from the server and the reason.
             std::cout << "Client: Disconnected from server. Reason: " << pInfo->m_info.m_szEndDebug << std::endl;
             m_pInterface->CloseConnection(pInfo->m_hConn, 0, nullptr, false); // Close the connection formally.
-            m_hConnection = k_HSteamNetConnection_Invalid; // Mark as disconnected.
+            m_hConnection = k_HSteamNetConnection_Invalid;                    // Mark as disconnected.
             break;
         }
 

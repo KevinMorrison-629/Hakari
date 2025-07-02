@@ -14,9 +14,6 @@ namespace Core::Utils
     /// @brief Mersenne Twister 19937 random number generator, seeded by `rd`.
     inline static std::mt19937 gen(rd());
     /// @brief Uniform integer distribution for selecting characters from `VALID_CODE_CHARACTERS`.
-    /// Note: The distribution range should ideally be `VALID_CODE_CHARACTERS.size() - 1` if used as an index.
-    /// Using `VALID_CODE_CHARACTERS.size()` might lead to an out-of-bounds access if the upper bound is inclusive.
-    /// However, std::uniform_int_distribution is [a, b], so size()-1 is correct.
     inline static std::uniform_int_distribution<uint64_t> random_code_dist(0, VALID_CODE_CHARACTERS.size() - 1);
 
     /// @brief Generates a random alphanumeric code of a specified length.
@@ -33,7 +30,4 @@ namespace Core::Utils
         }
         return code;
     }
-
-    // TODO: Consider adding a proper UUID generation class/function if this namespace is intended for UUIDs.
-    // For example, using a library or implementing RFC 4122.
 }

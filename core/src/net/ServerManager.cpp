@@ -158,7 +158,8 @@ namespace Core::Net
         {
             ISteamNetworkingMessage *pIncomingMsgs[16]; // Buffer for incoming messages for this client.
             int numMsgs = m_pInterface->ReceiveMessagesOnConnection(hConn, pIncomingMsgs, 16);
-            if (numMsgs < 0) {
+            if (numMsgs < 0)
+            {
                 // Error receiving messages for this connection
                 // std::cerr << "Error receiving messages on connection " << hConn << std::endl; // Optional: for debugging
                 continue;
