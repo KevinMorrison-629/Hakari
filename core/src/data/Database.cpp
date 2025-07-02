@@ -1,7 +1,7 @@
-#include "core/persistence/Database.h"
-#include "core/persistence/ScopedClient.h" // Make sure to include the new header
+#include "core/data/Database.h"
+#include "core/data/ScopedClient.h" // Make sure to include the new header
 
-namespace Core::Persistence
+namespace Core::Data
 {
     ScopedClient Database::getClient()
     {

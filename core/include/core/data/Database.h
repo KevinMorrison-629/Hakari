@@ -7,9 +7,9 @@
 #include <mongocxx/pool.hpp>
 #include <mongocxx/uri.hpp>
 
-#include "core/persistence/ScopedClient.h"
+#include "core/data/ScopedClient.h"
 
-namespace Core::Persistence
+namespace Core::Data
 {
     class Database
     {

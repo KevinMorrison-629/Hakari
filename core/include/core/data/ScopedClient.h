@@ -1,12 +1,12 @@
 #pragma once
 
-#include "core/Persistence/CollectionWrapper.h"
-#include "core/Persistence/Collection/Card.h"
-#include "core/Persistence/Collection/Player.h"
+#include "core/data/collectionWrapper.h"
+#include "core/data/collection/Card.h"
+#include "core/data/collection/Player.h"
 
 #include <mongocxx/pool.hpp> // Required for mongocxx::pool::entry
 
-namespace Core::Persistence
+namespace Core::Data
 {
     class ScopedClient
     {

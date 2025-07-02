@@ -14,7 +14,7 @@
 #include <bsoncxx/oid.hpp>
 #include <bsoncxx/types.hpp>
 
-namespace Core::Persistence
+namespace Core::Data
 {
     enum class FieldType : uint8_t
     {
