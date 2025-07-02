@@ -4,23 +4,32 @@
 
 namespace Core::Net
 {
-    // The static callback function is the global entry point for connection status changes.
+    /// @brief Static callback function for global connection status changes.
+    /// This function is registered with SteamNetworkingSockets and dispatches events
+    /// to the appropriate NetworkManager instance by casting m_nUserData.
+    /// @param pInfo Pointer to the SteamNetConnectionStatusChangedCallback_t structure.
     void NetworkManager::OnGlobalConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t *pInfo)
     {
         // The user data we set during connection/listen is a pointer to our NetworkManager instance.
         NetworkManager *manager = (NetworkManager *)pInfo->m_info.m_nUserData;
         if (manager)
         {
+            /// @brief Calls the instance-specific handler for connection status changes.
             manager->HandleConnectionStatusChanged(pInfo);
         }
     }
 
+    /// @brief Constructor for NetworkManager.
+    /// Initializes the GameNetworkingSockets library. If initialization fails,
+    /// an error message is printed to std::cerr. It also acquires the
+    /// ISteamNetworkingSockets interface.
     NetworkManager::NetworkManager() : m_pInterface(nullptr)
     {
         // Initialize the GameNetworkingSockets library.
         SteamDatagramErrMsg errMsg;
         if (!GameNetworkingSockets_Init(nullptr, errMsg))
         {
+            /// @brief Logs a fatal error if GameNetworkingSockets_Init fails.
             std::cerr << "FATAL: GameNetworkingSockets_Init failed. " << errMsg << std::endl;
         }
         else
@@ -29,12 +38,17 @@ namespace Core::Net
         }
     }
 
+    /// @brief Destructor for NetworkManager.
+    /// Shuts down the GameNetworkingSockets library.
     NetworkManager::~NetworkManager()
     {
         // Shutdown the library.
         GameNetworkingSockets_Kill();
     }
 
+    /// @brief Polls for network events by running callbacks.
+    /// If the network interface is not initialized, this function does nothing.
+    /// This method is crucial for processing network messages and status updates.
     void NetworkManager::Poll()
     {
         if (!m_pInterface)

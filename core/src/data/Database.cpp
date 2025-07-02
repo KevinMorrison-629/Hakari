@@ -3,6 +3,12 @@
 
 namespace Core::Data
 {
+    /// @brief Acquires a database client from the pool.
+    /// This function is called by the Database class to provide a client
+    /// for database operations. It ensures that the database is connected
+    /// before attempting to acquire a client.
+    /// @return A ScopedClient object that provides access to the database.
+    /// @throws std::runtime_error if the database is not connected.
     ScopedClient Database::getClient()
     {
         if (!m_Pool)
