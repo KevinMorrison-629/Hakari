@@ -1,8 +1,7 @@
 #include "core/net/ServerManager.h"
 
-#include "core/persistence/Database.h"
-#include "core/persistence/collection/Card.h"
-#include "core/persistence/QueryBuilder.h"
+#include "core/data/Database.h"
+#include "core/data/collection/Card.h"
 
 #include <iostream>
 #include <chrono>
@@ -12,7 +11,7 @@ int main()
 {
     Core::Net::ServerManager myServer;
 
-    Core::Persistence::Database::instance().Connect("mongodb://localhost:27017/?maxPoolSize=50", "hakaridb");
+    Core::Data::Database::instance().Connect("mongodb://localhost:27017/?maxPoolSize=50", "hakaridb");
 
     if (!myServer.Start(9000))
     {
@@ -20,12 +19,12 @@ int main()
         return 1;
     }
 
-    auto db_client = Core::Persistence::Database::instance().getClient();
+    auto db_client = Core::Data::Database::instance().getClient();
 
     auto results = db_client.Cards.GetAll({});
     if (!results.empty())
     {
-        Core::Persistence::Collection::Card p = results.front();
+        Core::Data::Collection::Card p = results.front();
         std::cout << p.getName() << std::endl;
     }
 

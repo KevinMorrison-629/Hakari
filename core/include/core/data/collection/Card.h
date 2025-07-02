@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core/persistence/CollectionEntry.h"
+#include "core/data/CollectionEntry.h"
 #include <string>
 
-namespace Core::Persistence::Collection
+namespace Core::Data::Collection
 {
     class Card : public CollectionEntry
     {

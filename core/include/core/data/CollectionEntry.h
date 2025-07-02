@@ -14,9 +14,9 @@
 #include <bsoncxx/oid.hpp>
 #include <bsoncxx/types.hpp>
 
-#include "core/persistence/Field.h"
+#include "core/data/Field.h"
 
-namespace Core::Persistence
+namespace Core::Data
 {
     class CollectionEntry
     {

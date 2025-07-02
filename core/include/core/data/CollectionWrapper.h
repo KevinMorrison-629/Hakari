@@ -5,8 +5,7 @@
 #include <vector>
 #include <optional>
 
-#include "core/persistence/CollectionEntry.h"
-#include "core/persistence/QueryBuilder.h"
+#include "core/data/CollectionEntry.h"
 
 #include <bsoncxx/json.hpp>
 #include <iostream>
@@ -17,7 +16,7 @@
 #include <mongocxx/uri.hpp>
 #include <mongocxx/options/count.hpp>
 
-namespace Core::Persistence
+namespace Core::Data
 {
     template <typename T, typename std::enable_if_t<std::is_base_of<CollectionEntry, T>::value, int> = 0>
     class CollectionWrapper
@@ -66,22 +65,6 @@ namespace Core::Persistence
             return entries;
         }
 
-        std::vector<T> GetAll(Query &query, size_t max_count = 999)
-        {
-            bsoncxx::document::value filter = query.build();
-
-            auto cursor = m_Collection.find(filter.view(), mongocxx::options::find{}.limit(max_count));
-
-            std::vector<T> entries;
-            for (auto &&doc : cursor)
-            {
-                T entry;
-                entry.fromBson(doc);
-                entries.push_back(std::move(entry));
-            }
-            return entries;
-        }
-
         std::vector<T> GetAll(const std::unordered_map<std::string, FieldValue> &fields, size_t max_count = 999)
         {
             mongocxx::pipeline pipeline{};
@@ -97,7 +80,7 @@ namespace Core::Persistence
                 pipeline.match(match_stage.view());
             }
 
-            mongocxx::options::aggregate &options = mongocxx::options::aggregate();
+            mongocxx::options::aggregate options = mongocxx::options::aggregate();
             options.batch_size(max_count);
             auto cursor = m_Collection.aggregate(pipeline, options);
 
