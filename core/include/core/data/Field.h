@@ -14,85 +14,100 @@
 #include <bsoncxx/oid.hpp>
 #include <bsoncxx/types.hpp>
 
+/// @brief Namespace for core data handling functionalities, including BSON field manipulation.
 namespace Core::Data
 {
+    /// @brief Enumerates the possible BSON data types that a field can represent.
     enum class FieldType : uint8_t
     {
-        FT_ARRAY,
-        FT_BINARY,
-        FT_BOOLEAN,
-        FT_CODE,
-        FT_DATE,
-        FT_DECIMAL_128,
-        FT_DOUBLE,
-        FT_INT_32,
-        FT_INT_64,
-        FT_MAXKEY,
-        FT_MINKEY,
-        FT_NULL,
-        FT_OBJECT,
-        FT_OBJECT_ID,
-        FT_BSON_REG_EXPR,
-        FT_STRING,
-        FT_BSON_SYMBOL,
-        FT_TIMESTAMP,
-        FT_UNDEFINED,
+        FT_ARRAY,        ///< Array type.
+        FT_BINARY,       ///< Binary data type.
+        FT_BOOLEAN,      ///< Boolean type.
+        FT_CODE,         ///< JavaScript code type.
+        FT_DATE,         ///< Date type.
+        FT_DECIMAL_128,  ///< Decimal128 type (high-precision number).
+        FT_DOUBLE,       ///< Double-precision floating-point type.
+        FT_INT_32,       ///< 32-bit integer type.
+        FT_INT_64,       ///< 64-bit integer type.
+        FT_MAXKEY,       ///< MaxKey type (internal MongoDB type).
+        FT_MINKEY,       ///< MinKey type (internal MongoDB type).
+        FT_NULL,         ///< Null type.
+        FT_OBJECT,       ///< Embedded document/object type.
+        FT_OBJECT_ID,    ///< ObjectId type (unique identifier).
+        FT_BSON_REG_EXPR,///< Regular expression type.
+        FT_STRING,       ///< UTF-8 string type.
+        FT_BSON_SYMBOL,  ///< Symbol type (deprecated in BSON).
+        FT_TIMESTAMP,    ///< Timestamp type (internal MongoDB type).
+        FT_UNDEFINED,    ///< Undefined type.
     };
 
     // Forward declaration for self-referential variant.
     struct FieldValue;
 
+    /// @brief Metafunction to map C++ types to FieldType enum values.
+    /// @tparam T The C++ type to map.
     template <typename T>
     struct type_to_fieldtype;
 
+    /// @brief Specialization of type_to_fieldtype for bool.
     template <>
     struct type_to_fieldtype<bool>
     {
-        static constexpr FieldType value = FieldType::FT_BOOLEAN;
+        static constexpr FieldType value = FieldType::FT_BOOLEAN; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for int32_t.
     template <>
     struct type_to_fieldtype<int32_t>
     {
-        static constexpr FieldType value = FieldType::FT_INT_32;
+        static constexpr FieldType value = FieldType::FT_INT_32; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for int64_t.
     template <>
     struct type_to_fieldtype<int64_t>
     {
-        static constexpr FieldType value = FieldType::FT_INT_64;
+        static constexpr FieldType value = FieldType::FT_INT_64; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for double.
     template <>
     struct type_to_fieldtype<double>
     {
-        static constexpr FieldType value = FieldType::FT_DOUBLE;
+        static constexpr FieldType value = FieldType::FT_DOUBLE; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for bsoncxx::oid.
     template <>
     struct type_to_fieldtype<bsoncxx::oid>
     {
-        static constexpr FieldType value = FieldType::FT_OBJECT_ID;
+        static constexpr FieldType value = FieldType::FT_OBJECT_ID; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for std::string.
     template <>
     struct type_to_fieldtype<std::string>
     {
-        static constexpr FieldType value = FieldType::FT_STRING;
+        static constexpr FieldType value = FieldType::FT_STRING; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for bsoncxx::types::b_date.
     template <>
     struct type_to_fieldtype<bsoncxx::types::b_date>
     {
-        static constexpr FieldType value = FieldType::FT_DATE;
+        static constexpr FieldType value = FieldType::FT_DATE; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for std::vector<FieldValue>.
     template <>
     struct type_to_fieldtype<std::vector<FieldValue>>
     {
-        static constexpr FieldType value = FieldType::FT_ARRAY;
+        static constexpr FieldType value = FieldType::FT_ARRAY; ///< Corresponding FieldType.
     };
+    /// @brief Specialization of type_to_fieldtype for std::unordered_map<std::string, FieldValue>.
     template <>
     struct type_to_fieldtype<std::unordered_map<std::string, FieldValue>>
     {
-        static constexpr FieldType value = FieldType::FT_OBJECT;
+        static constexpr FieldType value = FieldType::FT_OBJECT; ///< Corresponding FieldType.
     };
 
-    // Define a variant to hold different field types.
-    // (For example: a MongoDB ObjectId, numbers, booleans, strings, etc.)
+    /// @brief A std::variant type alias representing the possible C++ types a field can hold.
+    /// This variant is used by FieldValue to store the actual data.
+    /// It includes recursive types like std::vector<FieldValue> for arrays and
+    /// std::unordered_map<std::string, FieldValue> for nested objects.
     using FieldVariant = std::variant<std::vector<FieldValue>,                    // For FT_ARRAY
                                       std::vector<uint8_t>,                       // For FT_BINARY
                                       bool,                                       // For FT_BOOLEAN
@@ -100,33 +115,49 @@ namespace Core::Data
                                       int64_t,                                    // For FT_INT_64
                                       double,                                     // For FT_DOUBLE
                                       std::nullptr_t,                             // For FT_NULL
-                                      bsoncxx::oid,                               // <-- Add this for FT_OBJECT_ID
+                                      bsoncxx::oid,                               // For FT_OBJECT_ID
                                       std::string,                                // For FT_STRING, FT_CODE, etc.
-                                      bsoncxx::types::b_date,                     // FT_DATE
-                                      bsoncxx::types::b_timestamp,                // FT_TIMESTAMP
+                                      bsoncxx::types::b_date,                     // For FT_DATE
+                                      bsoncxx::types::b_timestamp,                // For FT_TIMESTAMP
                                       std::unordered_map<std::string, FieldValue> // For FT_OBJECT
                                       >;
 
-    // A field’s value includes its type and the actual value.
+    /// @brief Represents a BSON-like field, containing both its type and its value.
+    /// This struct is used to build and parse BSON documents in a more type-safe manner
+    /// before converting to/from the bsoncxx library's representations.
     struct FieldValue
     {
+        /// @brief Default constructor. Initializes type to an undefined state and value to default.
         FieldValue() = default;
+        /// @brief Default destructor.
         ~FieldValue() = default;
+        /// @brief Constructs a FieldValue with a specific type and value.
+        /// @param _type The FieldType of this field.
+        /// @param _val The FieldVariant holding the actual data for this field.
         FieldValue(const FieldType &_type, const FieldVariant &_val)
         {
             type = _type;
             value = _val;
         }
 
-        FieldType type;
-        FieldVariant value;
+        FieldType type = FieldType::FT_UNDEFINED; ///< The BSON type of the field.
+        FieldVariant value;                       ///< The actual value of the field, stored in a variant.
     };
 
-    // Equality operator for FieldValue (for simple types).
+    /// @brief Equality operator for FieldValue.
+    /// Compares two FieldValue objects for equality. Primarily intended for simple types.
+    /// For complex types like arrays or objects, this performs a direct comparison of the variant's content,
+    /// which might not be a deep comparison depending on the underlying types' operator==.
+    /// @param lhs The left-hand side FieldValue.
+    /// @param rhs The right-hand side FieldValue.
+    /// @return True if the types are the same and the values are equal, false otherwise.
     inline bool operator==(const FieldValue &lhs, const FieldValue &rhs)
     {
         if (lhs.type != rhs.type)
             return false;
+        // Note: This relies on std::variant::operator== which performs
+        // element-wise comparison for std::vector and std::unordered_map
+        // if their contained types also support operator==.
         return lhs.value == rhs.value;
     }
 
