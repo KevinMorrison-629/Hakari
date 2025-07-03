@@ -1,6 +1,7 @@
 #pragma once
 
-#include "core/net/NetworkManager.h"
+#include "core/net/ConnectionManager.h"
+#include "core/utils/TaskManager.h"
 
 #include <vector>
 #include <string>
@@ -9,8 +10,8 @@ namespace Core::Net
 {
     /// @brief Manages the server-side network operations, including listening for client connections.
     /// This class handles starting and stopping the server, broadcasting messages to clients,
-    /// and managing connected clients. It inherits from NetworkManager.
-    class ServerManager : public NetworkManager
+    /// and managing connected clients. It inherits from ConnectionManager.
+    class ServerManager : public ConnectionManager
     {
     public:
         /// @brief Starts the server and begins listening for incoming connections on the specified port.
@@ -29,7 +30,7 @@ namespace Core::Net
         /// @brief Receives and processes pending messages from all connected clients.
         /// This method should be called regularly to handle incoming data.
         /// In the current implementation, it prints received messages to the console.
-        void ReceiveMessages();
+        void ReceiveMessages(std::unique_ptr<Utils::TaskManager> &taskManager);
         // TODO: Add a callback mechanism for message received, similar to ClientManager::OnMessageReceived.
         // std::function<void(HSteamNetConnection, const std::string &)> OnClientMessageReceived;
 

@@ -20,7 +20,7 @@ add_executable(server
 
 # Make header files in this directory available to current project.
 target_include_directories(${SERVER_NAME} PRIVATE
-    ${HEADERS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link server executable against dependencies

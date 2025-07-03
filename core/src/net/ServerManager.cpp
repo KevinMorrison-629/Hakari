@@ -24,8 +24,8 @@ namespace Core::Net
         SteamNetworkingConfigValue_t opts[2];
 
         // Option 1: Set the callback function for connection status changes.
-        // The static function NetworkManager::OnGlobalConnectionStatusChanged will dispatch to our instance method.
-        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)NetworkManager::OnGlobalConnectionStatusChanged);
+        // The static function ConnectionManager::OnGlobalConnectionStatusChanged will dispatch to our instance method.
+        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)ConnectionManager::OnGlobalConnectionStatusChanged);
 
         // Option 2: Set the user data to be a pointer to this ServerManager instance.
         // This is crucial for the static callback to find the correct instance to delegate to.
@@ -149,7 +149,7 @@ namespace Core::Net
     /// Iterates through each connected client and attempts to receive messages.
     /// Currently, received messages are printed to standard output.
     /// TODO: Implement a callback mechanism (e.g., OnClientMessageReceived) for more flexible message handling.
-    void ServerManager::ReceiveMessages()
+    void ServerManager::ReceiveMessages(std::unique_ptr<Utils::TaskManager> &taskManager)
     {
         if (!m_pInterface)
             return;
@@ -172,6 +172,12 @@ namespace Core::Net
                     if (pIncomingMsgs[i] && pIncomingMsgs[i]->m_cbSize > 0)
                     {
                         std::string msg((const char *)pIncomingMsgs[i]->m_pData, pIncomingMsgs[i]->m_cbSize);
+
+                        Utils::Task task;
+                        task.priority = Utils::TaskPriority::Low;
+                        task.name = msg;
+                        taskManager->submit(task);
+
                         /// @brief Logs a message received from a specific client.
                         std::cout << "Server: Received from client " << hConn << ": " << msg << std::endl;
                         // TODO: Process the message, e.g., by invoking a callback:
