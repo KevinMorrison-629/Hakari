@@ -3,6 +3,8 @@
 #include <memory>
 #include <thread>
 
+#include <dpp/dpp.h>
+
 #include <mongocxx/instance.hpp>
 #include <mongocxx/pool.hpp>
 #include <mongocxx/uri.hpp>
@@ -10,6 +12,8 @@
 #include "core/data/Database.h"
 #include "core/net/ServerManager.h"
 #include "core/utils/TaskManager.h"
+
+#include "core/discord/Bot.h"
 
 namespace Server
 {
@@ -22,16 +26,18 @@ namespace Server
         Application() = default;
         ~Application() = default;
 
-        void Initialize(int32_t server_port);
-        void Run();
+        void Initialize(int32_t server_port, const std::string &bot_token);
+        void Start();
         void Shutdown();
 
     private:
         bool m_isRunning = false;
 
-        std::unique_ptr<Core::Net::ServerManager> m_ConnectionManager;
-        // std::unique_ptr<DiscordManager> m_DiscordManager;
+        std::shared_ptr<Core::Net::ServerManager> m_ConnectionManager;
+        std::shared_ptr<Core::Discord::Bot> m_DiscordManager;
 
-        std::unique_ptr<Core::Utils::TaskManager> m_TaskManager;
+        std::shared_ptr<Core::Utils::TaskManager> m_TaskManager;
+
+        std::shared_ptr<dpp::cluster> m_cluster;
     };
 }

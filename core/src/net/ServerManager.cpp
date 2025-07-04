@@ -11,7 +11,7 @@ namespace Core::Net
     /// @param nPort The port number to listen on.
     /// @return True if the server started successfully and the listen socket was created,
     /// false if the network interface is unavailable or socket creation fails.
-    bool ServerManager::Start(uint16 nPort)
+    bool ServerManager::Initialize(uint16 nPort, std::shared_ptr<Utils::TaskManager> &taskManager)
     {
         if (!m_pInterface)
             return false;
@@ -40,13 +40,31 @@ namespace Core::Net
         }
         /// @brief Logs successful server start and listening port.
         std::cout << "Server listening on port " << nPort << std::endl;
+
+        // Set Task Manager object
+        m_TaskManager = taskManager;
+
         return true;
+    }
+
+    void ServerManager::Run()
+    {
+        m_isRunning = true;
+        while (m_isRunning)
+        {
+            Poll();
+            ReceiveMessages();
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
 
     /// @brief Stops the server.
     /// Closes all active client connections and then closes the listen socket.
     void ServerManager::Stop()
     {
+        m_isRunning = false;
+
         if (!m_pInterface)
             return;
 
@@ -149,7 +167,7 @@ namespace Core::Net
     /// Iterates through each connected client and attempts to receive messages.
     /// Currently, received messages are printed to standard output.
     /// TODO: Implement a callback mechanism (e.g., OnClientMessageReceived) for more flexible message handling.
-    void ServerManager::ReceiveMessages(std::unique_ptr<Utils::TaskManager> &taskManager)
+    void ServerManager::ReceiveMessages()
     {
         if (!m_pInterface)
             return;
@@ -175,8 +193,8 @@ namespace Core::Net
 
                         Utils::Task task;
                         task.priority = Utils::TaskPriority::Low;
-                        task.name = msg;
-                        taskManager->submit(task);
+                        task.type = Utils::TaskType::MESSAGE;
+                        m_TaskManager->submit(task);
 
                         /// @brief Logs a message received from a specific client.
                         std::cout << "Server: Received from client " << hConn << ": " << msg << std::endl;

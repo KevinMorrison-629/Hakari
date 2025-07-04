@@ -1,5 +1,7 @@
 #include "server/Application.h"
 
+#include "core/utils/FileReader.h"
+
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -8,8 +10,10 @@ int main()
 {
     Server::Application app = Server::Application();
 
-    app.Initialize(9000);
-    app.Run();
+    std::string botToken = Core::Utils::ReadFile("C:\\Users\\Kevin\\Desktop\\Hakari\\bot_token.txt");
+
+    app.Initialize(9000, botToken);
+    app.Start();
 
     return 0;
 }

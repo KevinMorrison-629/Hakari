@@ -2,38 +2,41 @@
 
 namespace Server
 {
-    void Application::Initialize(int32_t server_port)
+    void Application::Initialize(int32_t server_port, const std::string &bot_token)
     {
 
         // Connect to Database
         Core::Data::Database::instance().Connect("mongodb://localhost:27017/?maxPoolSize=50", "hakaridb");
 
-        // Instantiate Server Connection
-        m_ConnectionManager = std::make_unique<Core::Net::ServerManager>();
-        if (!m_ConnectionManager->Start(9000))
-        {
-            std::cerr << "Failed to start server." << std::endl;
-        }
-
         // Instantiate Task Manager
-        m_TaskManager = std::make_unique<Core::Utils::TaskManager>(4);
+        m_TaskManager = std::make_shared<Core::Utils::TaskManager>(4);
         if (!m_TaskManager)
         {
             std::cerr << "Failed to start task manager." << std::endl;
         }
 
+        // Instantiate Server Connection
+        m_ConnectionManager = std::make_shared<Core::Net::ServerManager>();
+        if (!m_ConnectionManager->Initialize(9000, m_TaskManager))
+        {
+            std::cerr << "Failed to start server." << std::endl;
+        }
+
+        // Initiate Discord Bot
+        m_cluster = std::make_shared<dpp::cluster>(bot_token, dpp::i_default_intents | dpp::i_guild_messages);
+        m_DiscordManager = std::make_shared<Core::Discord::Bot>();
+        m_DiscordManager->Initialize(m_cluster, m_TaskManager);
+
         m_isRunning = true;
     }
 
-    void Application::Run()
+    void Application::Start()
     {
-        while (m_isRunning)
-        {
-            m_ConnectionManager->Poll();
-            m_ConnectionManager->ReceiveMessages(m_TaskManager);
+        std::thread discordManagerThread(&Core::Discord::Bot::Run, m_DiscordManager);
+        std::thread connectionManagerThread(&Core::Net::ServerManager::Run, m_ConnectionManager);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        discordManagerThread.join();
+        connectionManagerThread.join();
     }
 
     void Application::Shutdown()

@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
+#include <dpp/dpp.h>
+
 #include "core/utils/ThreadsafeQueue.h"
 
 namespace Core::Utils
@@ -14,11 +17,28 @@ namespace Core::Utils
         High
     };
 
+    enum class TaskType
+    {
+        MESSAGE,
+        DPP_SLASH_COMMAND,
+        DPP_REACTION_ADD,
+    };
+
     // Define a generic task structure
     struct Task
     {
         TaskPriority priority;
-        std::string name;
+        TaskType type;
+    };
+
+    struct TaskDiscordCommand : Task
+    {
+        std::string interaction_token;
+        std::string command_name;
+        std::map<std::string, std::variant<std::string, int64_t, double>> parameters;
+        dpp::snowflake guild_id;
+        dpp::snowflake user_id;
+        std::shared_ptr<dpp::cluster> bot_cluster;
     };
 
     /// @brief Manages a pool of threads that process tasks from three priority
@@ -122,7 +142,16 @@ namespace Core::Utils
         /// @param task task to process
         void ProcessTask(const Task &task)
         {
-            std::cout << "Processing task '" << task.name << "' on thread "
+            if (task.type == TaskType::DPP_SLASH_COMMAND)
+            {
+                TaskDiscordCommand cmd = static_cast<TaskDiscordCommand>(task);
+
+                dpp::message response;
+                response.set_content("Pong!");
+                cmd.bot_cluster->interaction_response_edit(cmd.interaction_token, response);
+            }
+
+            std::cout << "Processing task '" << int(task.priority) << "' on thread "
                       << std::this_thread::get_id() << std::endl;
             // Simulate work
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
