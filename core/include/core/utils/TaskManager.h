@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <memory>
 #include <dpp/dpp.h>
+#include <iostream>
+#include <memory>
+#include <string>
 
 #include "core/utils/ThreadsafeQueue.h"
 
@@ -29,9 +29,25 @@ namespace Core::Utils
     {
         TaskPriority priority;
         TaskType type;
+
+        virtual ~Task() = default;
+
+        virtual void process() const = 0;
     };
 
-    struct TaskDiscordCommand : Task
+    struct TaskMessage : public Task
+    {
+        std::string message;
+
+        void process() const override
+        {
+            std::cout << "Processing task '" << int(priority) << "' on thread " << std::this_thread::get_id() << std::endl;
+
+            std::cout << "Message: " << message << std::endl;
+        }
+    };
+
+    struct TaskDiscordCommand : public Task
     {
         std::string interaction_token;
         std::string command_name;
@@ -39,6 +55,18 @@ namespace Core::Utils
         dpp::snowflake guild_id;
         dpp::snowflake user_id;
         std::shared_ptr<dpp::cluster> bot_cluster;
+
+        void process() const override
+        {
+            std::cout << "Processing task '" << int(priority) << "' on thread " << std::this_thread::get_id() << std::endl;
+
+            if (command_name == "ping")
+            {
+                dpp::message response;
+                response.set_content("Pong!");
+                bot_cluster->interaction_response_edit(interaction_token, response);
+            }
+        }
     };
 
     /// @brief Manages a pool of threads that process tasks from three priority
@@ -74,19 +102,23 @@ namespace Core::Utils
 
         /// @brief Submits a new task to the appropriate queue.
         /// @param task The task to be processed.
-        void submit(Task task)
+        void submit(std::unique_ptr<Task> task)
         {
-            switch (task.priority)
+            if (task)
             {
-            case TaskPriority::High:
-                m_highPriorityQueue.push(task);
-                break;
-            case TaskPriority::Standard:
-                m_standardPriorityQueue.push(task);
-                break;
-            case TaskPriority::Low:
-                m_lowPRiorityQueue.push(task);
-                break;
+                TaskPriority priority = task->priority;
+                switch (priority)
+                {
+                case TaskPriority::High:
+                    m_highPriorityQueue.push(std::move(task));
+                    break;
+                case TaskPriority::Standard:
+                    m_standardPriorityQueue.push(std::move(task));
+                    break;
+                case TaskPriority::Low:
+                    m_lowPRiorityQueue.push(std::move(task));
+                    break;
+                }
             }
         }
 
@@ -95,13 +127,13 @@ namespace Core::Utils
         /// Implements the 5:3:1 weighted polling logic.
         void WorkerLoop()
         {
-            Task task;
             while (!m_done)
             {
+                std::unique_ptr<Task> task;
                 // Attempt to process tasks based on weighted priority
                 if (TryPopWeighted(task))
                 {
-                    ProcessTask(task);
+                    task->process();
                 }
                 else
                 {
@@ -115,7 +147,7 @@ namespace Core::Utils
         /// @brief Tries to pop from queues with 5:3:1 weighting.
         /// @param[out] task The task that was popped.
         /// @return true if a task was successfully popped, false otherwise.
-        bool TryPopWeighted(Task &task)
+        bool TryPopWeighted(std::unique_ptr<Task> &task)
         {
             // HIGH priority: try up to 5 times (weight 5)
             for (int i = 0; i < 5; ++i)
@@ -138,32 +170,13 @@ namespace Core::Utils
             return false;
         }
 
-        /// @brief Processes Task (stubbed out for now - just prints out task name)
-        /// @param task task to process
-        void ProcessTask(const Task &task)
-        {
-            if (task.type == TaskType::DPP_SLASH_COMMAND)
-            {
-                TaskDiscordCommand cmd = static_cast<TaskDiscordCommand>(task);
-
-                dpp::message response;
-                response.set_content("Pong!");
-                cmd.bot_cluster->interaction_response_edit(cmd.interaction_token, response);
-            }
-
-            std::cout << "Processing task '" << int(task.priority) << "' on thread "
-                      << std::this_thread::get_id() << std::endl;
-            // Simulate work
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-
     private:
         // Queues for different priority levels
-        ThreadsafeQueue<Task> m_highPriorityQueue;
-        ThreadsafeQueue<Task> m_standardPriorityQueue;
-        ThreadsafeQueue<Task> m_lowPRiorityQueue;
+        ThreadsafeQueue<std::unique_ptr<Task>> m_highPriorityQueue;
+        ThreadsafeQueue<std::unique_ptr<Task>> m_standardPriorityQueue;
+        ThreadsafeQueue<std::unique_ptr<Task>> m_lowPRiorityQueue;
 
         std::atomic<bool> m_done;           // Flag to signal threads to shut down
         std::vector<std::thread> m_workers; // The thread pool
     };
-}
+} // namespace Core::Utils

@@ -1,7 +1,7 @@
 #include "core/net/ServerManager.h"
 
-#include <iostream>
 #include <algorithm> // For std::remove
+#include <iostream>
 
 namespace Core::Net
 {
@@ -25,7 +25,8 @@ namespace Core::Net
 
         // Option 1: Set the callback function for connection status changes.
         // The static function ConnectionManager::OnGlobalConnectionStatusChanged will dispatch to our instance method.
-        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)ConnectionManager::OnGlobalConnectionStatusChanged);
+        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged,
+                       (void *)ConnectionManager::OnGlobalConnectionStatusChanged);
 
         // Option 2: Set the user data to be a pointer to this ServerManager instance.
         // This is crucial for the static callback to find the correct instance to delegate to.
@@ -99,7 +100,8 @@ namespace Core::Net
         // std::cout << "Broadcasting message: " << strMessage << std::endl; // Optional: for debugging
         for (HSteamNetConnection hConn : m_vecClients)
         {
-            m_pInterface->SendMessageToConnection(hConn, strMessage.c_str(), strMessage.length(), k_nSteamNetworkingSend_Reliable, nullptr);
+            m_pInterface->SendMessageToConnection(hConn, strMessage.c_str(), strMessage.length(),
+                                                  k_nSteamNetworkingSend_Reliable, nullptr);
         }
     }
 
@@ -121,7 +123,8 @@ namespace Core::Net
                 // If acceptance fails, close the connection.
                 m_pInterface->CloseConnection(pInfo->m_hConn, 0, "Failed to accept (server busy?)", false);
                 /// @brief Logs failure to accept a connection.
-                std::cout << "Server: Failed to accept connection from " << pInfo->m_info.m_szConnectionDescription << std::endl;
+                std::cout << "Server: Failed to accept connection from " << pInfo->m_info.m_szConnectionDescription
+                          << std::endl;
             }
             else
             {
@@ -134,7 +137,8 @@ namespace Core::Net
         case k_ESteamNetworkingConnectionState_Connected:
         {
             /// @brief Logs that a client has successfully connected and adds them to the client list.
-            std::cout << "Server: Client connected. ID: " << pInfo->m_hConn << " (" << pInfo->m_info.m_szConnectionDescription << ")" << std::endl;
+            std::cout << "Server: Client connected. ID: " << pInfo->m_hConn << " ("
+                      << pInfo->m_info.m_szConnectionDescription << ")" << std::endl;
             m_vecClients.push_back(pInfo->m_hConn);
             // You might want to send a welcome message or perform other setup here.
             break;
@@ -144,7 +148,8 @@ namespace Core::Net
         case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
         {
             /// @brief Logs that a client has disconnected and removes them from the client list.
-            std::cout << "Server: Client disconnected. ID: " << pInfo->m_hConn << " (" << pInfo->m_info.m_szConnectionDescription << "). Reason: " << pInfo->m_info.m_szEndDebug << std::endl;
+            std::cout << "Server: Client disconnected. ID: " << pInfo->m_hConn << " ("
+                      << pInfo->m_info.m_szConnectionDescription << "). Reason: " << pInfo->m_info.m_szEndDebug << std::endl;
             m_pInterface->CloseConnection(pInfo->m_hConn, 0, nullptr, false); // Ensure connection is closed.
 
             // Remove the client from our active list.
@@ -156,9 +161,11 @@ namespace Core::Net
             break;
         }
         // k_ESteamNetworkingConnectionState_None is typically for new connections before any state.
-        // k_ESteamNetworkingConnectionState_FinWait and k_ESteamNetworkingConnectionState_Linger are part of graceful shutdown, usually not needing direct handling here for server logic.
+        // k_ESteamNetworkingConnectionState_FinWait and k_ESteamNetworkingConnectionState_Linger are part of graceful
+        // shutdown, usually not needing direct handling here for server logic.
         default:
-            // std::cout << "Server: Connection " << pInfo->m_hConn << " changed state to " << pInfo->m_info.m_eState << std::endl; // Optional: for debugging other states
+            // std::cout << "Server: Connection " << pInfo->m_hConn << " changed state to " << pInfo->m_info.m_eState <<
+            // std::endl; // Optional: for debugging other states
             break;
         }
     }
@@ -191,10 +198,11 @@ namespace Core::Net
                     {
                         std::string msg((const char *)pIncomingMsgs[i]->m_pData, pIncomingMsgs[i]->m_cbSize);
 
-                        Utils::Task task;
-                        task.priority = Utils::TaskPriority::Low;
-                        task.type = Utils::TaskType::MESSAGE;
-                        m_TaskManager->submit(task);
+                        std::unique_ptr<Utils::TaskMessage> task = std::make_unique<Utils::TaskMessage>();
+                        task->priority = Utils::TaskPriority::Low;
+                        task->type = Utils::TaskType::MESSAGE;
+                        task->message = "Test Message";
+                        m_TaskManager->submit(std::move(task));
 
                         /// @brief Logs a message received from a specific client.
                         std::cout << "Server: Received from client " << hConn << ": " << msg << std::endl;
@@ -206,4 +214,4 @@ namespace Core::Net
             }
         }
     }
-}
+} // namespace Core::Net
