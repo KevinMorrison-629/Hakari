@@ -22,8 +22,8 @@ namespace Core::Data
             : m_Client(std::move(client)),
               // Initialize your collection wrappers here, using the acquired client
               Cards{(*m_Client)[db_name]["cards"]}
-              // TODO: Initialize Player collection if it's intended to be used.
-              // Players{(*m_Client)[db_name]["players"]}
+        // TODO: Initialize Player collection if it's intended to be used.
+        // Players{(*m_Client)[db_name]["players"]}
         {
         }
 
@@ -37,4 +37,4 @@ namespace Core::Data
         /// When this ScopedClient object is destroyed, the connection is automatically returned to the pool.
         mongocxx::pool::entry m_Client;
     };
-}
+} // namespace Core::Data

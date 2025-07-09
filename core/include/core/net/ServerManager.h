@@ -3,8 +3,8 @@
 #include "core/net/ConnectionManager.h"
 #include "core/utils/TaskManager.h"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Core::Net
 {
@@ -55,4 +55,4 @@ namespace Core::Net
 
         bool m_isRunning = false;
     };
-}
+} // namespace Core::Net

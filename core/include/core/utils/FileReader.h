@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <fstream>
+#include <string>
 
 namespace Core::Utils
 {
@@ -14,7 +14,6 @@ namespace Core::Utils
             throw std::runtime_error("Could not open file: " + filepath);
         }
 
-        return std::string(std::istreambuf_iterator<char>(inputFileStream),
-                           std::istreambuf_iterator<char>());
+        return std::string(std::istreambuf_iterator<char>(inputFileStream), std::istreambuf_iterator<char>());
     }
-}
+} // namespace Core::Utils

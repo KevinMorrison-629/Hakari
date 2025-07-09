@@ -1,6 +1,6 @@
 
-#include <string>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include <dpp/dpp.h>
@@ -40,4 +40,4 @@ namespace Server
 
         std::shared_ptr<dpp::cluster> m_cluster;
     };
-}
+} // namespace Server

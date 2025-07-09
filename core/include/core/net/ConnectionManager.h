@@ -1,7 +1,7 @@
 #pragma once
 
-#include <steam/steamnetworkingsockets.h>
 #include <functional>
+#include <steam/steamnetworkingsockets.h>
 
 namespace Core::Net
 {
@@ -40,4 +40,4 @@ namespace Core::Net
 
     private:
     };
-}
+} // namespace Core::Net

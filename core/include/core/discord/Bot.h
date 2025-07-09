@@ -22,11 +22,9 @@ namespace Core::Discord
             // Register event handlers using lambda functions (logging, onReady, slashCommands, etc)
             m_bot->on_log(dpp::utility::cout_logger());
 
-            m_bot->on_ready([this](const dpp::ready_t &event)
-                            { this->OnReady(event); });
+            m_bot->on_ready([this](const dpp::ready_t &event) { this->OnReady(event); });
 
-            m_bot->on_slashcommand([this](const dpp::interaction_create_t &event)
-                                   { this->OnSlashCommand(event); });
+            m_bot->on_slashcommand([this](const dpp::interaction_create_t &event) { this->OnSlashCommand(event); });
 
             // m_bot->on_message_reaction_add([this](const dpp::message_reaction_add_t &event)
             //                                { this->OnReactionAdd(event); });
@@ -57,4 +55,4 @@ namespace Core::Discord
         std::shared_ptr<dpp::cluster> m_bot;
         std::shared_ptr<Utils::TaskManager> m_taskManager;
     };
-}
+} // namespace Core::Discord

@@ -1,13 +1,12 @@
 #pragma once
 
-#include <queue>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 
 namespace Core::Utils
 {
-    template <typename T>
-    class ThreadsafeQueue
+    template <typename T> class ThreadsafeQueue
     {
     public:
         /// @brief Default Constructor
@@ -68,4 +67,4 @@ namespace Core::Utils
         /// @brief Condition variable to signal waiting threads.
         std::condition_variable m_cond;
     };
-}
+} // namespace Core::Utils

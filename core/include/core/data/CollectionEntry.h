@@ -4,8 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 // Include MongoDB C++ driver headers for BSON building.
 #include <bsoncxx/builder/basic/array.hpp>
@@ -53,10 +53,9 @@ namespace Core::Data
         /// @param field The name of the field to retrieve.
         /// @param defaultValue The value to return if the field is not found or type mismatch occurs.
         /// @return The field's value cast to type T, or defaultValue if not found/mismatched.
-        template <typename T>
-        T getValue(const std::string &field, T defaultValue = T()) const
+        template <typename T> T getValue(const std::string &field, T defaultValue = T()) const
         {
-            if (const FieldValue* f = getField(field))
+            if (const FieldValue *f = getField(field))
             {
                 // Check if the variant holds the requested type T
                 if (std::holds_alternative<T>(f->value))
@@ -74,8 +73,7 @@ namespace Core::Data
         /// @tparam T The C++ type of the value being set.
         /// @param field The name of the field to set.
         /// @param value The value to set for the field.
-        template <typename T>
-        void setValue(const std::string &field, const T &value)
+        template <typename T> void setValue(const std::string &field, const T &value)
         {
             setField(field, FieldValue{type_to_fieldtype<T>::value, value});
         }
@@ -107,7 +105,7 @@ namespace Core::Data
             for (auto element : doc)
             {
                 std::string key{element.key().data(), element.key().length()}; // Ensure correct string construction
-                FieldValue fv = fromBsonElement(element); // fromBsonElement is defined in Field.h
+                FieldValue fv = fromBsonElement(element);                      // fromBsonElement is defined in Field.h
                 fields[key] = fv;
             }
         }
@@ -120,4 +118,4 @@ namespace Core::Data
     private:
         // No private members in this version.
     };
-}
+} // namespace Core::Data

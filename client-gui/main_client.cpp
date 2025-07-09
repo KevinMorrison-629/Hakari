@@ -1,17 +1,14 @@
 #include "core/net/ClientManager.h"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 int main()
 {
     Core::Net::ClientManager myClient;
 
-    myClient.OnMessageReceived = [](const std::string &msg)
-    {
-        std::cout << "Message from server: " << msg << std::endl;
-    };
+    myClient.OnMessageReceived = [](const std::string &msg) { std::cout << "Message from server: " << msg << std::endl; };
 
     if (!myClient.Connect("127.0.0.1:9000"))
     {
