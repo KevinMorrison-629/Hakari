@@ -26,8 +26,10 @@ namespace Core::Net
 
         // Set up configuration options for the connection.
         SteamNetworkingConfigValue_t opts[2];
-        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)NetworkManager::OnGlobalConnectionStatusChanged);
-        opts[1].SetInt64(k_ESteamNetworkingConfig_ConnectionUserData, (int64)this); // Pass this ClientManager instance as user data.
+        opts[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged,
+                       (void *)ConnectionManager::OnGlobalConnectionStatusChanged);
+        opts[1].SetInt64(k_ESteamNetworkingConfig_ConnectionUserData,
+                         (int64)this); // Pass this ClientManager instance as user data.
 
         m_hConnection = m_pInterface->ConnectByIPAddress(serverAddr, 2, opts);
         if (m_hConnection == k_HSteamNetConnection_Invalid)
@@ -58,7 +60,8 @@ namespace Core::Net
     {
         if (!IsConnected())
             return;
-        m_pInterface->SendMessageToConnection(m_hConnection, strMessage.c_str(), strMessage.length(), k_nSteamNetworkingSend_Reliable, nullptr);
+        m_pInterface->SendMessageToConnection(m_hConnection, strMessage.c_str(), strMessage.length(),
+                                              k_nSteamNetworkingSend_Reliable, nullptr);
     }
 
     /// @brief Checks if the client is currently connected to a server.
@@ -137,4 +140,4 @@ namespace Core::Net
             }
         }
     }
-}
+} // namespace Core::Net

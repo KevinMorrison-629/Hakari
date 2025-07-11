@@ -68,12 +68,12 @@ namespace Constants
     public:
         /// @brief Constructor from a UUIDTypeEnum value.
         /// @param e The enum value.
-        UUIDType(UUIDTypeEnum e) : m_en(e){};
+        UUIDType(UUIDTypeEnum e) : m_en(e) {};
 
         /// @brief Constructor from a string prefix.
         /// Converts the string to the corresponding UUIDTypeEnum.
         /// @param s The string prefix (e.g., "pl" for PLAYER).
-        UUIDType(const std::string &s) : UUIDType(string_to_enum(s)){};
+        UUIDType(const std::string &s) : UUIDType(string_to_enum(s)) {};
 
         /// @brief Gets the string prefix representation of the UUID type.
         /// @return The string prefix (e.g., "pl"). Returns "xx" if the type is undefined or not found.

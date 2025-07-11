@@ -10,7 +10,6 @@ file(GLOB_RECURSE HEADERS
 )
 
 # Find the packages provided by vcpkg.
-find_package(dpp CONFIG REQUIRED)
 
 # Create executable with given src files
 add_executable(server
@@ -20,11 +19,10 @@ add_executable(server
 
 # Make header files in this directory available to current project.
 target_include_directories(${SERVER_NAME} PRIVATE
-    ${HEADERS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link server executable against dependencies
 target_link_libraries(${SERVER_NAME} PRIVATE
     core_lib
-    dpp::dpp
 )

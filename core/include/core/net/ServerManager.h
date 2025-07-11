@@ -1,22 +1,27 @@
 #pragma once
 
-#include "core/net/NetworkManager.h"
+#include "core/net/ConnectionManager.h"
+#include "core/utils/TaskManager.h"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace Core::Net
 {
     /// @brief Manages the server-side network operations, including listening for client connections.
     /// This class handles starting and stopping the server, broadcasting messages to clients,
-    /// and managing connected clients. It inherits from NetworkManager.
-    class ServerManager : public NetworkManager
+    /// and managing connected clients. It inherits from ConnectionManager.
+    class ServerManager : public ConnectionManager
     {
     public:
         /// @brief Starts the server and begins listening for incoming connections on the specified port.
         /// @param nPort The port number to listen on.
         /// @return True if the server started successfully and is listening, false otherwise.
-        bool Start(uint16 nPort);
+        bool Initialize(uint16 nPort, std::shared_ptr<Utils::TaskManager> &taskManager);
+
+        /// @brief Starts the server
+        /// @details This is a blocking call that runs until Stop() is called.
+        void Run();
 
         /// @brief Stops the server, disconnects all clients, and closes the listen socket.
         void Stop();
@@ -30,8 +35,6 @@ namespace Core::Net
         /// This method should be called regularly to handle incoming data.
         /// In the current implementation, it prints received messages to the console.
         void ReceiveMessages();
-        // TODO: Add a callback mechanism for message received, similar to ClientManager::OnMessageReceived.
-        // std::function<void(HSteamNetConnection, const std::string &)> OnClientMessageReceived;
 
     protected:
         /// @brief Handles connection status changes for the server.
@@ -47,5 +50,12 @@ namespace Core::Net
 
         /// @brief Vector storing the connection handles of all currently connected clients.
         std::vector<HSteamNetConnection> m_vecClients;
+
+        /// @brief A shared pointer to the task manager.
+        /// Used to add tasks to the processing queue
+        std::shared_ptr<Utils::TaskManager> m_TaskManager;
+
+        /// @brief Flag indicating whether the ServerManager is currently running.
+        bool m_isRunning = false;
     };
-}
+} // namespace Core::Net

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include <mongocxx/instance.hpp>
 #include <mongocxx/pool.hpp>
@@ -60,4 +60,4 @@ namespace Core::Data
         /// @brief Name of the database.
         std::string m_DatabaseName;
     };
-}
+} // namespace Core::Data

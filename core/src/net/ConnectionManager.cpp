@@ -1,4 +1,4 @@
-#include "core/net/NetworkManager.h"
+#include "core/net/ConnectionManager.h"
 
 #include <iostream>
 
@@ -6,12 +6,12 @@ namespace Core::Net
 {
     /// @brief Static callback function for global connection status changes.
     /// This function is registered with SteamNetworkingSockets and dispatches events
-    /// to the appropriate NetworkManager instance by casting m_nUserData.
+    /// to the appropriate ConnectionManager instance by casting m_nUserData.
     /// @param pInfo Pointer to the SteamNetConnectionStatusChangedCallback_t structure.
-    void NetworkManager::OnGlobalConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t *pInfo)
+    void ConnectionManager::OnGlobalConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t *pInfo)
     {
-        // The user data we set during connection/listen is a pointer to our NetworkManager instance.
-        NetworkManager *manager = (NetworkManager *)pInfo->m_info.m_nUserData;
+        // The user data we set during connection/listen is a pointer to our ConnectionManager instance.
+        ConnectionManager *manager = (ConnectionManager *)pInfo->m_info.m_nUserData;
         if (manager)
         {
             /// @brief Calls the instance-specific handler for connection status changes.
@@ -19,11 +19,11 @@ namespace Core::Net
         }
     }
 
-    /// @brief Constructor for NetworkManager.
+    /// @brief Constructor for ConnectionManager.
     /// Initializes the GameNetworkingSockets library. If initialization fails,
     /// an error message is printed to std::cerr. It also acquires the
     /// ISteamNetworkingSockets interface.
-    NetworkManager::NetworkManager() : m_pInterface(nullptr)
+    ConnectionManager::ConnectionManager() : m_pInterface(nullptr)
     {
         // Initialize the GameNetworkingSockets library.
         SteamDatagramErrMsg errMsg;
@@ -38,9 +38,9 @@ namespace Core::Net
         }
     }
 
-    /// @brief Destructor for NetworkManager.
+    /// @brief Destructor for ConnectionManager.
     /// Shuts down the GameNetworkingSockets library.
-    NetworkManager::~NetworkManager()
+    ConnectionManager::~ConnectionManager()
     {
         // Shutdown the library.
         GameNetworkingSockets_Kill();
@@ -49,7 +49,7 @@ namespace Core::Net
     /// @brief Polls for network events by running callbacks.
     /// If the network interface is not initialized, this function does nothing.
     /// This method is crucial for processing network messages and status updates.
-    void NetworkManager::Poll()
+    void ConnectionManager::Poll()
     {
         if (!m_pInterface)
             return;

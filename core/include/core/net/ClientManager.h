@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/net/NetworkManager.h"
+#include "core/net/ConnectionManager.h"
 
 #include <steam/steamnetworkingsockets.h>
 #include <string>
@@ -9,8 +9,8 @@ namespace Core::Net
 {
     /// @brief Manages the client-side network connection to a server.
     /// This class handles connecting to a server, sending and receiving messages,
-    /// and managing the connection state. It inherits from NetworkManager.
-    class ClientManager : public NetworkManager
+    /// and managing the connection state. It inherits from ConnectionManager.
+    class ClientManager : public ConnectionManager
     {
     public:
         /// @brief Attempts to connect to a server at the specified address.

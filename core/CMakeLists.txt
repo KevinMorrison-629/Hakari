@@ -13,6 +13,7 @@ file(GLOB_RECURSE HEADERS
 find_package(GameNetworkingSockets CONFIG REQUIRED)
 find_package(bsoncxx CONFIG REQUIRED)
 find_package(mongocxx CONFIG REQUIRED)
+find_package(dpp CONFIG REQUIRED)
 
 # Create library with given src files
 add_library(${CORE_NAME} STATIC
@@ -30,4 +31,5 @@ target_link_libraries(${CORE_NAME} PUBLIC
     GameNetworkingSockets::GameNetworkingSockets_s
     $<IF:$<TARGET_EXISTS:mongo::bsoncxx_static>,mongo::bsoncxx_static,mongo::bsoncxx_shared>
     $<IF:$<TARGET_EXISTS:mongo::mongocxx_static>,mongo::mongocxx_static,mongo::mongocxx_shared>
+    dpp::dpp
 )

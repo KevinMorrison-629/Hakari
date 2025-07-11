@@ -1,9 +1,9 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 #include "core/data/CollectionEntry.h"
 
@@ -13,8 +13,8 @@
 #include <mongocxx/collection.hpp>
 #include <mongocxx/database.hpp>
 #include <mongocxx/instance.hpp>
-#include <mongocxx/uri.hpp>
 #include <mongocxx/options/count.hpp>
+#include <mongocxx/uri.hpp>
 
 namespace Core::Data
 {
@@ -159,7 +159,8 @@ namespace Core::Data
         {
             try
             {
-                if (match.empty()) // Fields can be empty if only $unset or other ops are used, but for $set, it implies no change.
+                if (match.empty()) // Fields can be empty if only $unset or other ops are used, but for $set, it implies no
+                                   // change.
                 {
                     std::cerr << "Error: Match criteria cannot be empty for UpdateEntry." << std::endl;
                     return false;
@@ -209,7 +210,9 @@ namespace Core::Data
             {
                 if (match.empty())
                 {
-                    std::cerr << "Error: Match criteria cannot be empty for DeleteEntry. To delete all, use a specific method or pass an empty document explicitly." << std::endl;
+                    std::cerr << "Error: Match criteria cannot be empty for DeleteEntry. To delete all, use a specific "
+                                 "method or pass an empty document explicitly."
+                              << std::endl;
                     return false;
                 }
 
@@ -233,7 +236,8 @@ namespace Core::Data
         /// @brief Counts the number of entries in the collection that match the given criteria.
         /// @param match A map of field names to FieldValue objects specifying the criteria. If empty, counts all documents.
         /// @return The number of matching documents, or 0 on error.
-        size_t CountEntries(const std::unordered_map<std::string, FieldValue> &match = {}) // Default to empty map for counting all
+        size_t
+        CountEntries(const std::unordered_map<std::string, FieldValue> &match = {}) // Default to empty map for counting all
         {
             try
             {
@@ -307,11 +311,11 @@ namespace Core::Data
                 // The newElement itself might be complex (e.g. a document), AppendToDocument handles this.
                 // However, $push expects { arrayField: valueToPush } or { arrayField: { $each: [valuesToPush] } }
                 // Here, we are pushing a single FieldValue, which could be a simple type or a document/array itself.
-                // The BSON structure for $push { field: value } is what AppendToDocument creates if field is arrayField and value is newElement.
-                // Let's ensure the value part is correctly BSON-ified for the $push operation.
-                // This is tricky because AppendToDocument expects a key.
-                // We need to build the { arrayField: BSON_VALUE_OF_newElement } for the $push operator.
-                // A direct AppendToDocument(push_payload_doc, arrayField, newElement) is correct here.
+                // The BSON structure for $push { field: value } is what AppendToDocument creates if field is arrayField and
+                // value is newElement. Let's ensure the value part is correctly BSON-ified for the $push operation. This is
+                // tricky because AppendToDocument expects a key. We need to build the { arrayField: BSON_VALUE_OF_newElement
+                // } for the $push operator. A direct AppendToDocument(push_payload_doc, arrayField, newElement) is correct
+                // here.
                 AppendToDocument(push_payload_doc, arrayField, newElement);
 
                 bsoncxx::builder::basic::document update_doc;
@@ -387,7 +391,8 @@ namespace Core::Data
                 }
 
                 bsoncxx::builder::basic::document unset_payload_doc;
-                unset_payload_doc.append(bsoncxx::builder::basic::kvp(arrayField, "")); // Value for $unset doesn't matter, usually empty string or 1.
+                unset_payload_doc.append(bsoncxx::builder::basic::kvp(
+                    arrayField, "")); // Value for $unset doesn't matter, usually empty string or 1.
 
                 bsoncxx::builder::basic::document update_doc;
                 update_doc.append(bsoncxx::builder::basic::kvp("$unset", unset_payload_doc.view()));
@@ -406,4 +411,4 @@ namespace Core::Data
         /// @brief The underlying `mongocxx::collection` object this wrapper manages.
         mongocxx::v_noabi::collection m_Collection;
     };
-}
+} // namespace Core::Data
