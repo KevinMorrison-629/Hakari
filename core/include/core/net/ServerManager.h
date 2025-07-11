@@ -19,6 +19,8 @@ namespace Core::Net
         /// @return True if the server started successfully and is listening, false otherwise.
         bool Initialize(uint16 nPort, std::shared_ptr<Utils::TaskManager> &taskManager);
 
+        /// @brief Starts the server
+        /// @details This is a blocking call that runs until Stop() is called.
         void Run();
 
         /// @brief Stops the server, disconnects all clients, and closes the listen socket.
@@ -33,8 +35,6 @@ namespace Core::Net
         /// This method should be called regularly to handle incoming data.
         /// In the current implementation, it prints received messages to the console.
         void ReceiveMessages();
-        // TODO: Add a callback mechanism for message received, similar to ClientManager::OnMessageReceived.
-        // std::function<void(HSteamNetConnection, const std::string &)> OnClientMessageReceived;
 
     protected:
         /// @brief Handles connection status changes for the server.
@@ -51,8 +51,11 @@ namespace Core::Net
         /// @brief Vector storing the connection handles of all currently connected clients.
         std::vector<HSteamNetConnection> m_vecClients;
 
+        /// @brief A shared pointer to the task manager.
+        /// Used to add tasks to the processing queue
         std::shared_ptr<Utils::TaskManager> m_TaskManager;
 
+        /// @brief Flag indicating whether the ServerManager is currently running.
         bool m_isRunning = false;
     };
 } // namespace Core::Net

@@ -6,6 +6,8 @@ namespace Core::Discord
 {
     void Bot::OnSlashCommand(const dpp::interaction_create_t &event)
     {
+        /// @todo For now, going to keep this bot "thinking" event. If we expect some commands to quickly resolve,
+        /// we can selectively choose to send this command.
         event.thinking();
 
         std::unique_ptr<Core::Utils::TaskDiscordCommand> task = std::make_unique<Core::Utils::TaskDiscordCommand>();
@@ -16,12 +18,6 @@ namespace Core::Discord
         task->guild_id = event.command.guild_id;
         task->interaction_token = event.command.token;
         task->user_id = event.command.get_issuing_user().id;
-
-        // // get command parameters based on command name
-        // if (task.command_name == "ping")
-        // {
-        //     task.parameters["count"] = std::get<std::string>(event.get_parameter("count"));
-        // };
 
         m_taskManager->submit(std::move(task));
     }

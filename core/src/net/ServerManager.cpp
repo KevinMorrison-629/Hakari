@@ -53,6 +53,8 @@ namespace Core::Net
         m_isRunning = true;
         while (m_isRunning)
         {
+            /// @todo may want to place these in a try-catch statement so that
+            // we can gracefully exity the program if we encounter an error
             Poll();
             ReceiveMessages();
 
