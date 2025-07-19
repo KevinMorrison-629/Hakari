@@ -1,6 +1,6 @@
-#include "server/Application.h"
+#include "server/app/Application.h"
 
-#include "core/utils/FileReader.h"
+#include "common/core/FileReader.h"
 
 #include <chrono>
 #include <iostream>
