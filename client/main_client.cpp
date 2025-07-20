@@ -1,38 +1,49 @@
+#include "client/gui/GuiManager.h"
 #include "client/net/ClientManager.h"
+#include "imgui.h"
 
-#include <chrono>
 #include <iostream>
-#include <thread>
+#include <memory>
 
 int main()
 {
-    Core::Net::ClientManager myClient;
-
-    myClient.OnMessageReceived = [](const std::string &msg) { std::cout << "Message from server: " << msg << std::endl; };
-
-    if (!myClient.Connect("127.0.0.1:9000"))
+    auto guiManager = std::make_unique<Client::Gui::GuiManager>();
+    if (!guiManager->Initialize("Hakari Client", 1280, 720))
     {
-        std::cerr << "Failed to connect to server." << std::endl;
+        std::cerr << "Failed to initialize GUI." << std::endl;
         return 1;
     }
 
-    auto lastSendTime = std::chrono::steady_clock::now();
+    auto clientManager = std::make_unique<Core::Net::ClientManager>();
+    clientManager->OnMessageReceived = [](const std::string &msg) { std::cout << "Message from server: " << msg << std::endl; };
 
-    while (myClient.IsConnected())
+    if (!clientManager->Connect("127.0.0.1:9000"))
     {
-        myClient.Poll();
-        myClient.ReceiveMessages();
-
-        if (std::chrono::steady_clock::now() - lastSendTime > std::chrono::seconds(3))
-        {
-            std::cout << "Sending hello message..." << std::endl;
-            myClient.SendMessageToServer("Hello from the client!");
-            lastSendTime = std::chrono::steady_clock::now();
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::cerr << "Failed to connect to server." << std::endl;
     }
 
-    std::cout << "Client disconnected." << std::endl;
+    guiManager->RenderGui = [&]() {
+        ImGui::Begin("Hakari Client");
+        if (ImGui::Button("Send 'Hello' to server"))
+        {
+            if (clientManager->IsConnected())
+            {
+                clientManager->SendMessageToServer("Hello from the client!");
+            }
+        }
+        ImGui::End();
+    };
+
+    while (guiManager->IsRunning())
+    {
+        clientManager->Poll();
+        clientManager->ReceiveMessages();
+
+        guiManager->ProcessEvents();
+        guiManager->BeginFrame();
+        guiManager->RenderGui();
+        guiManager->EndFrame();
+    }
+
     return 0;
 }

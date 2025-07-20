@@ -19,6 +19,13 @@ target_include_directories(${CLIENT_NAME} PRIVATE
 )
 
 # Link server executable against dependencies
+find_package(SDL2 REQUIRED)
+find_package(ImGui REQUIRED)
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(${CLIENT_NAME} PRIVATE
     common_lib
+    SDL2::SDL2
+    ImGui::ImGui
+    OpenGL::GL
 )

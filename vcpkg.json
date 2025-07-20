@@ -4,6 +4,8 @@
     "dependencies": [
         "gamenetworkingsockets",
         "dpp",
-        "mongo-cxx-driver"
+        "mongo-cxx-driver",
+        "imgui[sdl2-binding,opengl3-binding]",
+        "sdl2"
     ]
 }
