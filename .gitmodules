@@ -1,0 +1,9 @@
+[submodule "external/QuickDb"]
+	path = external/QuickDb
+	url = https://github.com/KevinMorrison-629/QuickDb
+[submodule "external/QuickNet"]
+	path = external/QuickNet
+	url = https://github.com/KevinMorrison-629/QuickNet
+[submodule "external/QuickGui"]
+	path = external/QuickGui
+	url = https://github.com/KevinMorrison-629/QuickGui

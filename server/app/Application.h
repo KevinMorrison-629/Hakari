@@ -3,16 +3,13 @@
 #include <string>
 #include <thread>
 
+#include "quickdb/quickdb.h"
+#include "quicknet/quicknet.h"
+
 #include <dpp/dpp.h>
 
-#include <mongocxx/instance.hpp>
-#include <mongocxx/pool.hpp>
-#include <mongocxx/uri.hpp>
-
 #include "server/core/TaskManager.h"
-#include "server/data/Database.h"
 #include "server/discord/Bot.h"
-#include "server/net/ServerManager.h"
 
 namespace Server
 {
@@ -40,11 +37,14 @@ namespace Server
         /// @brief Shuts down all services and cleans up resources.
         void Shutdown();
 
+    public:
+        void ProcessMessage(HSteamNetConnection hConn, const std::vector<uint8_t> &byteMsg);
+
     private:
         bool m_isRunning = false; ///< @brief Flag indicating whether the application is currently running.
 
-        std::shared_ptr<Core::Net::ServerManager>
-            m_ConnectionManager; ///< @brief Manages network connections and communication.
+        std::shared_ptr<QNET::Server> m_ConnectionManager; ///< @brief Manages network connections and communication.
+        std::shared_ptr<QDB::Database> m_Database;
         std::shared_ptr<Core::Discord::Bot>
             m_DiscordManager; ///< @brief Manages the Discord bot's connection and event handling.
         std::shared_ptr<Core::Utils::TaskManager>

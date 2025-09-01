@@ -8,9 +8,6 @@ file(GLOB_RECURSE HEADERS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
 )
 
-# Find the packages provided by vcpkg.
-find_package(GameNetworkingSockets CONFIG REQUIRED)
-
 # Create library with given src files
 add_library(${COMMON_NAME} STATIC
     ${SOURCES}
@@ -23,5 +20,5 @@ target_include_directories(${COMMON_NAME} PUBLIC
 
 # Link library against dependencies
 target_link_libraries(${COMMON_NAME} PUBLIC
-    GameNetworkingSockets::GameNetworkingSockets_s
+    quickdb
 )

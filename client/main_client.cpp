@@ -1,4 +1,4 @@
-#include "client/net/ClientManager.h"
+#include "quicknet/quicknet.h"
 
 #include <chrono>
 #include <iostream>
@@ -6,9 +6,13 @@
 
 int main()
 {
-    Core::Net::ClientManager myClient;
+    QNET::Client myClient;
 
-    myClient.OnMessageReceived = [](const std::string &msg) { std::cout << "Message from server: " << msg << std::endl; };
+    myClient.OnMessageReceived = [](const std::vector<uint8_t> &byteMsg)
+    {
+        std::string msg((const char *)byteMsg.data(), byteMsg.size());
+        std::cout << "Message from server: " << msg << std::endl;
+    };
 
     if (!myClient.Connect("127.0.0.1:9000"))
     {
@@ -26,7 +30,9 @@ int main()
         if (std::chrono::steady_clock::now() - lastSendTime > std::chrono::seconds(3))
         {
             std::cout << "Sending hello message..." << std::endl;
-            myClient.SendMessageToServer("Hello from the client!");
+            std::string msg = "Hello from the client!";
+            std::vector<uint8_t> byteMsg(msg.data(), msg.data() + msg.size());
+            myClient.SendReliableMessageToServer(byteMsg);
             lastSendTime = std::chrono::steady_clock::now();
         }
 

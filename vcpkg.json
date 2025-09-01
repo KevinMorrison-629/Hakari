@@ -3,7 +3,16 @@
     "version-string": "0.0.1",
     "dependencies": [
         "gamenetworkingsockets",
+        "mongo-cxx-driver",
         "dpp",
-        "mongo-cxx-driver"
+        {
+            "name": "imgui",
+            "features": [
+                "glfw-binding",
+                "opengl3-binding"
+            ]
+        },
+        "glfw3",
+        "glad"
     ]
 }
