@@ -21,4 +21,5 @@ target_include_directories(${CLIENT_NAME} PRIVATE
 # Link server executable against dependencies
 target_link_libraries(${CLIENT_NAME} PRIVATE
     common_lib
+    quicknet
 )

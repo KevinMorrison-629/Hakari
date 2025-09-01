@@ -11,6 +11,9 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 # Add Subprojects
-add_subdirectory(client)
+add_subdirectory(external/QuickGui)
+add_subdirectory(external/QuickDb)
+add_subdirectory(external/QuickNet)
 add_subdirectory(common)
+add_subdirectory(client)
 add_subdirectory(server)

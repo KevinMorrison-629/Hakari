@@ -6,7 +6,7 @@ namespace Server
     {
 
         // Connect to Database
-        Core::Data::Database::instance().Connect("mongodb://localhost:27017/?maxPoolSize=50", "hakaridb");
+        m_Database = std::make_shared<QDB::Database>("mongodb://localhost:27017/?maxPoolSize=50");
 
         // Instantiate Task Manager
         m_TaskManager = std::make_shared<Core::Utils::TaskManager>(4);
@@ -16,8 +16,13 @@ namespace Server
         }
 
         // Instantiate Server Connection
-        m_ConnectionManager = std::make_shared<Core::Net::ServerManager>();
-        if (!m_ConnectionManager->Initialize(9000, m_TaskManager))
+        m_ConnectionManager = std::make_shared<QNET::Server>();
+        if (m_ConnectionManager->Initialize(9000))
+        {
+            m_ConnectionManager->OnMessageReceived = [this](HSteamNetConnection hConn, const std::vector<uint8_t> &byteMsg)
+            { this->ProcessMessage(hConn, byteMsg); };
+        }
+        else
         {
             std::cerr << "Failed to start server." << std::endl;
         }
@@ -33,7 +38,7 @@ namespace Server
     void Application::Start()
     {
         std::thread discordManagerThread(&Core::Discord::Bot::Run, m_DiscordManager);
-        std::thread connectionManagerThread(&Core::Net::ServerManager::Run, m_ConnectionManager);
+        std::thread connectionManagerThread(&QNET::Server::Run, m_ConnectionManager);
 
         discordManagerThread.join();
         connectionManagerThread.join();
@@ -50,4 +55,8 @@ namespace Server
         }
     }
 
-}
+    void Application::ProcessMessage(HSteamNetConnection hConn, const std::vector<uint8_t> &byteMsg)
+    {
+    }
+
+} // namespace Server
