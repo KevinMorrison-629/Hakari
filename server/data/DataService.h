@@ -1,0 +1,61 @@
+#pragma once
+
+#include "common/data/Dataclasses.h"
+#include "quickdb/quickdb.h"
+#include <memory>
+
+namespace Core::Data
+{
+    /**
+     * @brief A service class that centralizes all database collections and
+     * provides helper methods for common database operations. This is the preferred
+     * way to interact with the database.
+     */
+    class DataService
+    {
+    public:
+        // --- Public Collection Handles ---
+        // Direct access to the collection objects for maximum flexibility.
+        QDB::Collection<Player> players;
+        QDB::Collection<CardReference> card_references;
+        QDB::Collection<CardObject> card_objects;
+
+        /**
+         * @brief Constructs the service and initializes all collection handles.
+         * @param db A shared pointer to the database connection pool.
+         */
+        DataService(std::shared_ptr<QDB::Database> db)
+            : players(db->get_collection<Player>("hakari", "players")),
+              card_references(db->get_collection<CardReference>("hakari", "card_references")),
+              card_objects(db->get_collection<CardObject>("hakari", "card_objects"))
+        {
+        }
+
+        // --- Helper Methods for Common Queries ---
+
+        /**
+         * @brief Finds a player by their unique Discord ID. If no player is found,
+         * a new player document is created and inserted into the database.
+         * @param discord_id The Discord user's snowflake ID.
+         * @return The found or newly created Player object.
+         */
+        Player find_or_create_player_by_discord_id(int64_t discord_id)
+        {
+            auto query = QDB::Query().eq("discord_id", discord_id);
+            std::optional<Player> player_opt = players.find_one(query);
+
+            if (player_opt)
+            {
+                return *player_opt;
+            }
+            else
+            {
+                Player new_player;
+                new_player.discord_id = discord_id;
+                players.insert_one(new_player);
+                return new_player;
+            }
+        }
+    };
+
+} // namespace Core::Data

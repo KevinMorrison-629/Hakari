@@ -1,5 +1,8 @@
 #include "server/app/Application.h"
 
+#include "common/data/Dataclasses.h"
+#include "common/net/protocol.h"
+
 namespace Server
 {
     void Application::Initialize(int32_t server_port, const std::string &bot_token)
@@ -30,7 +33,7 @@ namespace Server
         // Initiate Discord Bot
         m_cluster = std::make_shared<dpp::cluster>(bot_token, dpp::i_default_intents | dpp::i_guild_messages);
         m_DiscordManager = std::make_shared<Core::Discord::Bot>();
-        m_DiscordManager->Initialize(m_cluster, m_TaskManager);
+        m_DiscordManager->Initialize(m_cluster, m_TaskManager, m_Database);
 
         m_isRunning = true;
     }
@@ -57,6 +60,20 @@ namespace Server
 
     void Application::ProcessMessage(HSteamNetConnection hConn, const std::vector<uint8_t> &byteMsg)
     {
+        Core::Net::MessageType type = Core::Net::PeekMessageType(byteMsg);
+
+        if (static_cast<uint8_t>(type) > 127U)
+        {
+            // Time Deferrable
+            switch (type)
+            {
+            }
+
+            // m_TaskManager->submit();
+        }
+        else
+        {
+        }
     }
 
 } // namespace Server
