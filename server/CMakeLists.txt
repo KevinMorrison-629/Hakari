@@ -13,6 +13,7 @@ find_package(dpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(unofficial-sodium CONFIG REQUIRED)
 find_package(jwt-cpp CONFIG REQUIRED)
+find_package(httplib CONFIG REQUIRED)
 
 # Create executable with given src files
 add_executable(server
@@ -33,4 +34,5 @@ target_link_libraries(${SERVER_NAME} PRIVATE
     nlohmann_json::nlohmann_json
     unofficial-sodium::sodium
     jwt-cpp::jwt-cpp
+    httplib::httplib
 )
