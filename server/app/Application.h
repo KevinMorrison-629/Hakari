@@ -10,6 +10,7 @@
 
 #include "server/core/TaskManager.h"
 #include "server/discord/Bot.h"
+#include "server/web/WebService.h"
 
 namespace Server
 {
@@ -28,7 +29,7 @@ namespace Server
         /// @brief Initializes all the major components of the application.
         /// @param server_port The port number for the network server to listen on.
         /// @param bot_token The authentication token for the Discord bot.
-        void Initialize(int32_t server_port, const std::string &bot_token);
+        void Initialize(int32_t server_port, uint16_t http_port, const std::string &bot_token);
 
         /// @brief Starts the application main loop and all services.
         /// @details This is a blocking call that runs until Shutdown() is called.
@@ -50,5 +51,6 @@ namespace Server
         std::shared_ptr<Core::Utils::TaskManager>
             m_TaskManager;                       ///< @brief Manages the thread pool for processing asynchronous tasks.
         std::shared_ptr<dpp::cluster> m_cluster; ///< @brief The dpp::cluster object for interacting with the Discord API.
+        std::shared_ptr<Core::Web::WebService> m_WebService;
     };
 } // namespace Server

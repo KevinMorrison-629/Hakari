@@ -1,17 +1,17 @@
 #include "server/discord/Bot.h"
-#include "server/tasks/OpenPack.h"
+#include "server/data/DataService.h"
+#include "server/discord/Command.h"
 
 namespace Core::Discord
 {
     void Bot::Initialize(std::shared_ptr<dpp::cluster> &bot, std::shared_ptr<Utils::TaskManager> &taskmanager,
-                         std::shared_ptr<QDB::Database> &db)
+                         std::shared_ptr<Data::DataService> &dataservice)
     {
         m_taskManager = taskmanager;
         m_bot = bot;
-        m_db = db;
 
         // Create the single DataService instance for the application.
-        m_dataService = std::make_shared<Data::DataService>(m_db);
+        m_dataService = dataservice;
 
         m_commandHandler = std::make_shared<Commands::CommandHandler>();
         RegisterCommands();
@@ -23,7 +23,7 @@ namespace Core::Discord
 
     void Bot::RegisterCommands()
     {
-        m_commandHandler->register_command("drop", Tasks::OpenPackDiscordCommand);
+        m_commandHandler->register_command("drop", Core::Discord::OpenPackDiscordCommand);
         m_commandHandler->register_command("ping",
                                            [](const Utils::TaskDiscordCommand &task)
                                            {

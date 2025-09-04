@@ -56,6 +56,12 @@ namespace Core::Data
                 return new_player;
             }
         }
+
+        std::optional<Player> find_player_by_email(std::string email)
+        {
+            auto query = QDB::Query().eq("email", email);
+            return players.find_one(query);
+        }
     };
 
 } // namespace Core::Data

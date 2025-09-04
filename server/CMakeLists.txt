@@ -10,6 +10,9 @@ file(GLOB_RECURSE HEADERS
 
 # Find the packages provided by vcpkg.
 find_package(dpp CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(unofficial-sodium CONFIG REQUIRED)
+find_package(jwt-cpp CONFIG REQUIRED)
 
 # Create executable with given src files
 add_executable(server
@@ -27,4 +30,7 @@ target_link_libraries(${SERVER_NAME} PRIVATE
     quicknet
     common_lib
     dpp::dpp
+    nlohmann_json::nlohmann_json
+    unofficial-sodium::sodium
+    jwt-cpp::jwt-cpp
 )

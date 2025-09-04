@@ -13,6 +13,10 @@
             ]
         },
         "glfw3",
-        "glad"
+        "glad",
+        "cpp-httplib",
+        "nlohmann-json",
+        "jwt-cpp",
+        "libsodium"
     ]
 }

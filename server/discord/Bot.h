@@ -18,7 +18,7 @@ namespace Core::Discord
         ~Bot() = default;
 
         void Initialize(std::shared_ptr<dpp::cluster> &bot, std::shared_ptr<Utils::TaskManager> &taskmanager,
-                        std::shared_ptr<QDB::Database> &db);
+                        std::shared_ptr<Data::DataService> &db);
 
         void Run();
 
@@ -29,7 +29,6 @@ namespace Core::Discord
 
         std::shared_ptr<dpp::cluster> m_bot;
         std::shared_ptr<Utils::TaskManager> m_taskManager;
-        std::shared_ptr<QDB::Database> m_db;
         std::shared_ptr<Commands::CommandHandler> m_commandHandler;
         std::shared_ptr<Data::DataService> m_dataService;
     };

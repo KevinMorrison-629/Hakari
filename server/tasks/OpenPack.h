@@ -1,46 +1,57 @@
 #pragma once
 
-#include "server/core/TaskManager.h"
-#include "server/tasks/GameLogic.h"
+#include "server/data/DataService.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace Core::Tasks
 {
-    inline void OpenPackDiscordCommand(const Core::Utils::TaskDiscordCommand &task)
+    struct PackOpeningResult
     {
-        // 1. Use the DataService's helper method to get the player.
-        int64_t discord_id = static_cast<int64_t>(task.user_id);
-        Core::Data::Player player = task.data_service->find_or_create_player_by_discord_id(discord_id);
+        bool success = false;
+        std::string message;
+        std::vector<Core::Data::CardReference> opened_card_refs;
+        std::vector<Core::Data::CardObject> opened_card_objs;
+    };
 
-        // 2. Call the core game logic, passing in the entire service.
-        Core::GameLogic::PackOpeningResult result = Core::GameLogic::OpenPackForPlayer(*task.data_service, player);
-
-        // 3. Format and send the Discord response (logic remains the same).
-        dpp::message response_msg;
-        if (result.success)
+    /**
+     * @brief Core logic for opening a pack. It now uses the DataService for all DB access.
+     * @param data_service The central service for database interaction.
+     * @param player_id The unique database ObjectId of the player.
+     * @return A PackOpeningResult struct with the outcome.
+     */
+    inline PackOpeningResult OpenPackForPlayer(Data::DataService &data_service, Core::Data::Player &player)
+    {
+        // 1. Get 3 random card references.
+        auto random_cards = data_service.card_references.find_random(QDB::Query(), 1, false);
+        if (random_cards.size() < 1)
         {
-            dpp::embed embed = dpp::embed().set_title("Pack Opened!").set_color(dpp::colors::green_apple);
-            std::string description = "Congratulations! You received 3 new cards:\n\n";
-            for (size_t i = 0; i < result.opened_card_refs.size(); ++i)
-            {
-                description += "• **" + result.opened_card_refs[i].name + "** (#" +
-                               std::to_string(result.opened_card_objs[i].number) + ")\n";
-            }
-            embed.set_description(description);
-
-            if (!result.opened_card_refs.empty())
-            {
-                std::string url = "https://hotpink-octopus-624350.hostingersite.com/character/" +
-                                  result.opened_card_refs[0].characterId.to_string();
-                std::cout << url << std::endl;
-                embed.set_image(url);
-            }
-            response_msg.add_embed(embed);
-        }
-        else
-        {
-            response_msg.set_content(result.message);
+            return {false, "Not enough unique cards in the game to open a pack!"};
         }
 
-        task.bot_cluster->interaction_response_edit(task.interaction_token, response_msg);
+        std::vector<Data::CardObject> new_card_objects;
+        std::vector<bsoncxx::oid> new_card_object_ids;
+
+        // 2. Create new CardObject instances.
+        for (auto &card_ref : random_cards)
+        {
+            Data::CardObject new_obj;
+            new_obj.cardReferenceId = card_ref.id;
+            new_obj.number = ++card_ref.numAcquired;
+            new_obj.quality = 1;
+
+            data_service.card_objects.insert_one(new_obj);
+            new_card_objects.push_back(new_obj);
+            new_card_object_ids.push_back(new_obj.id);
+
+            data_service.card_references.replace_one(QDB::Query::by_id(card_ref.get_id_str()), card_ref);
+        }
+
+        // 3. Add new cards to player's inventory and update.
+        player.inventory.insert(player.inventory.end(), new_card_object_ids.begin(), new_card_object_ids.end());
+        data_service.players.replace_one(QDB::Query::by_id(player.get_id_str()), player);
+
+        return {true, "Pack opened successfully!", random_cards, new_card_objects};
     }
 } // namespace Core::Tasks

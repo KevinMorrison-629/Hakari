@@ -3,13 +3,24 @@
 #include "common/data/Dataclasses.h"
 #include "common/net/protocol.h"
 
+#include <sodium.h>
+
 namespace Server
 {
-    void Application::Initialize(int32_t server_port, const std::string &bot_token)
+    void Application::Initialize(int32_t server_port, uint16_t http_port, const std::string &bot_token)
     {
+
+        // It's crucial to initialize libsodium before any cryptographic functions are used.
+        if (sodium_init() < 0)
+        {
+            throw std::runtime_error("Failed to initialize libsodium!");
+        }
 
         // Connect to Database
         m_Database = std::make_shared<QDB::Database>("mongodb://localhost:27017/?maxPoolSize=50");
+
+        // Create a single, shared DataService instance that all other services will use.
+        auto dataService = std::make_shared<Core::Data::DataService>(m_Database);
 
         // Instantiate Task Manager
         m_TaskManager = std::make_shared<Core::Utils::TaskManager>(4);
@@ -30,10 +41,14 @@ namespace Server
             std::cerr << "Failed to start server." << std::endl;
         }
 
+        // Instantiate Web Service for web clients
+        m_WebService = std::make_shared<Core::Web::WebService>(m_TaskManager, dataService);
+        m_WebService->Initialize(http_port);
+
         // Initiate Discord Bot
         m_cluster = std::make_shared<dpp::cluster>(bot_token, dpp::i_default_intents | dpp::i_guild_messages);
         m_DiscordManager = std::make_shared<Core::Discord::Bot>();
-        m_DiscordManager->Initialize(m_cluster, m_TaskManager, m_Database);
+        m_DiscordManager->Initialize(m_cluster, m_TaskManager, dataService);
 
         m_isRunning = true;
     }

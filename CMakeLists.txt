@@ -10,6 +10,10 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   message(FATAL_ERROR "Please invoke CMake with -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake")
 endif()
 
+if(WIN32)
+    add_compile_definitions(_WIN32_WINNT=0x0601)
+endif()
+
 # Add Subprojects
 add_subdirectory(external/QuickGui)
 add_subdirectory(external/QuickDb)
