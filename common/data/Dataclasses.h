@@ -12,9 +12,7 @@ namespace Core::Data
 
     struct CharacterReference : public QDB::Document
     {
-        bsoncxx::oid id;
         std::string uuid;
-
         int32_t mal_id;
         std::string name;
         std::string name_kanji;
@@ -29,7 +27,6 @@ namespace Core::Data
         {
             std::unordered_map<std::string, QDB::FieldValue> fields;
 
-            // fields["id"] = id;
             fields["uuid"] = uuid;
             fields["mal_id"] = mal_id;
             fields["name"] = name;
@@ -48,11 +45,6 @@ namespace Core::Data
         {
             // The new get_field helper simplifies deserialization.
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "uuid", uuid);
             QDB::get_field(fields, "mal_id", mal_id);
             QDB::get_field(fields, "name", name);
@@ -68,7 +60,6 @@ namespace Core::Data
 
     struct AnimeReference : public QDB::Document
     {
-        bsoncxx::oid id;
         std::string uuid;
 
         int32_t mal_id;
@@ -98,11 +89,6 @@ namespace Core::Data
         virtual void from_fields(const std::unordered_map<std::string, QDB::FieldValue> &fields) override
         {
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "uuid", uuid);
             QDB::get_field(fields, "mal_id", mal_id);
             QDB::get_field(fields, "url", url);
@@ -116,7 +102,6 @@ namespace Core::Data
 
     struct MangaReference : public QDB::Document
     {
-        bsoncxx::oid id;
         std::string uuid;
 
         int32_t mal_id;
@@ -148,11 +133,6 @@ namespace Core::Data
         virtual void from_fields(const std::unordered_map<std::string, QDB::FieldValue> &fields) override
         {
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "uuid", uuid);
             QDB::get_field(fields, "mal_id", mal_id);
             QDB::get_field(fields, "url", url);
@@ -169,7 +149,6 @@ namespace Core::Data
 
     struct CardReference : public QDB::Document
     {
-        bsoncxx::oid id;
         std::string uuid;
 
         std::string name;
@@ -197,11 +176,6 @@ namespace Core::Data
         virtual void from_fields(const std::unordered_map<std::string, QDB::FieldValue> &fields) override
         {
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "uuid", uuid);
             QDB::get_field(fields, "name", name);
             QDB::get_field(fields, "characterId", characterId);
@@ -214,10 +188,9 @@ namespace Core::Data
 
     struct CardObject : public QDB::Document
     {
-        bsoncxx::oid id;
         std::string uuid;
-
         bsoncxx::oid cardReferenceId;
+        bsoncxx::oid ownerId;
         int32_t number;
         int32_t quality;
 
@@ -227,6 +200,7 @@ namespace Core::Data
 
             fields["uuid"] = uuid;
             fields["cardReferenceId"] = cardReferenceId;
+            fields["ownerId"] = ownerId;
             fields["number"] = number;
             fields["quality"] = quality;
 
@@ -236,13 +210,9 @@ namespace Core::Data
         virtual void from_fields(const std::unordered_map<std::string, QDB::FieldValue> &fields) override
         {
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "uuid", uuid);
             QDB::get_field(fields, "cardReferenceId", cardReferenceId);
+            QDB::get_field(fields, "ownerId", ownerId);
             QDB::get_field(fields, "number", number);
             QDB::get_field(fields, "quality", quality);
         }
@@ -250,10 +220,9 @@ namespace Core::Data
 
     struct Player : public QDB::Document
     {
-        bsoncxx::oid id;
-        int64_t discord_id;
-        std::string email;
-        std::string password_hash;
+        int64_t discord_id = 0;
+        std::string email = "";
+        std::string password_hash = "";
         std::vector<bsoncxx::oid> inventory; // A list of CardObject IDs
 
         virtual std::unordered_map<std::string, QDB::FieldValue> to_fields() const override
@@ -269,11 +238,6 @@ namespace Core::Data
         virtual void from_fields(const std::unordered_map<std::string, QDB::FieldValue> &fields) override
         {
             QDB::get_field(fields, "_id", this->_id);
-            if (this->_id.type == QDB::FieldType::FT_OBJECT_ID)
-            {
-                this->id = this->_id.as<bsoncxx::oid>();
-            }
-
             QDB::get_field(fields, "discord_id", discord_id);
             QDB::get_field(fields, "inventory", inventory);
             QDB::get_field(fields, "email", email);

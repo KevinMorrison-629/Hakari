@@ -103,6 +103,7 @@
         "queue": "cpp",
         "fstream": "cpp",
         "shared_mutex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "regex": "cpp"
     }
 }

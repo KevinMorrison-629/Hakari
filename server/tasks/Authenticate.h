@@ -2,14 +2,21 @@
 
 #include "server/data/DataService.h"
 
-#include "jwt-cpp/jwt.h" // Assumes jwt-cpp is in your include path
+#include "jwt-cpp/jwt.h"
+#include "jwt-cpp/traits/nlohmann-json/traits.h"
 #include <memory>
+#include <optional>
 #include <sodium.h>
 #include <string>
 #include <vector>
 
 namespace Core::Tasks
 {
+    // You MUST change this to a long, random, secret string in a config file
+    const std::string JWT_SECRET = "a1LS3rL1bN45KWKE7URaSbRZxY8QaAqim2P6wzZ";
+
+    using decoded_token = jwt::decoded_jwt<jwt::traits::nlohmann_json>;
+
     // --- Result Structs ---
     struct RegistrationResult
     {
@@ -27,9 +34,6 @@ namespace Core::Tasks
     // --- Helper Function ---
     inline std::string CreateJwtForPlayer(const Core::Data::Player &player)
     {
-        // You MUST change this to a long, random, secret string in a config file
-        const std::string JWT_SECRET = "a1LS3rL1bN45KWKE7URaSbRZxY8QaAqim2P6wzZ";
-
         auto token = jwt::create()
                          .set_issuer("CardForge")
                          .set_type("JWS")
@@ -40,6 +44,25 @@ namespace Core::Tasks
                          .sign(jwt::algorithm::hs256{JWT_SECRET});
 
         return token;
+    }
+
+    inline std::optional<decoded_token> VerifyAndDecodeJwt(const std::string &token)
+    {
+        try
+        {
+            // Use nlohmann_json trait for the verifier
+            auto verifier = jwt::verify<jwt::traits::nlohmann_json>()
+                                .allow_algorithm(jwt::algorithm::hs256{JWT_SECRET})
+                                .with_issuer("CardForge");
+            auto decoded = jwt::decode<jwt::traits::nlohmann_json>(token);
+            verifier.verify(decoded);
+            return decoded;
+        }
+        catch (const std::exception &e)
+        {
+            // Token is invalid (expired, wrong signature, etc.)
+            return std::nullopt;
+        }
     }
 
     inline RegistrationResult RegisterUser(Core::Data::DataService &dataService, const std::string &email,
