@@ -47,19 +47,21 @@ namespace Server
 
         // Initiate Discord Bot
         m_cluster = std::make_shared<dpp::cluster>(bot_token, dpp::i_default_intents | dpp::i_guild_messages);
-        m_DiscordManager = std::make_shared<Core::Discord::Bot>();
-        m_DiscordManager->Initialize(m_cluster, m_TaskManager, dataService);
+        // m_DiscordManager = std::make_shared<Core::Discord::Bot>();
+        // m_DiscordManager->Initialize(m_cluster, m_TaskManager, dataService);
 
         m_isRunning = true;
     }
 
     void Application::Start()
     {
-        std::thread discordManagerThread(&Core::Discord::Bot::Run, m_DiscordManager);
+        // std::thread discordManagerThread(&Core::Discord::Bot::Run, m_DiscordManager);
         std::thread connectionManagerThread(&QNET::Server::Run, m_ConnectionManager);
+        std::thread webserviceThread(&Core::Web::WebService::Run, m_WebService);
 
-        discordManagerThread.join();
+        // discordManagerThread.join();
         connectionManagerThread.join();
+        webserviceThread.join();
     }
 
     void Application::Shutdown()

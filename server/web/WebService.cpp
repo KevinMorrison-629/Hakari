@@ -2,7 +2,6 @@
 
 #include "nlohmann/json.hpp"
 #include <filesystem>
-#include <functional>
 #include <iostream>
 
 #include "server/tasks/Tasks.h"
@@ -29,13 +28,11 @@ namespace Core::Web
         m_httpServer = std::make_shared<QNET::HttpServer>();
     }
 
-    void WebService::Initialize(uint16_t port)
+    bool WebService::checkFrontendDirectory(const std::string &frontendDir)
     {
-        setupRoutes();
-
         try
         {
-            std::filesystem::path fs_path("./server/web/build");
+            std::filesystem::path fs_path(frontendDir);
             std::cout << "[WebService] Attempting to serve static files from: " << fs_path.string() << std::endl;
             std::cout << "[WebService] Absolute path resolves to: " << std::filesystem::absolute(fs_path).string()
                       << std::endl;
@@ -43,36 +40,56 @@ namespace Core::Web
             if (!std::filesystem::exists(fs_path))
             {
                 std::cerr << "[WebService] WARNING: This directory does not exist!" << std::endl;
+                return false;
             }
             else if (!std::filesystem::is_directory(fs_path))
             {
                 std::cerr << "[WebService] WARNING: This path is a file, not a directory!" << std::endl;
+                return false;
             }
         }
         catch (const std::filesystem::filesystem_error &e)
         {
             std::cerr << "[WebService] Filesystem error: " << e.what() << std::endl;
+            return false;
         }
 
-        // Serve static files from the frontend build directory
-        m_httpServer->ServeStaticFiles("/", "./server/web/build");
+        return true;
+    }
 
-        std::cout << "HTTP Server initializing on http://localhost:" << port << std::endl;
+    void WebService::Initialize(uint16_t port)
+    {
+        m_port = port;
+        std::cout << "Initializing WebService on port " << m_port << "..." << std::endl;
 
-        // Run the server in its own thread to not block the main application
-        std::thread httpThread(&QNET::HttpServer::Run, m_httpServer, port);
-        httpThread.detach();
+        // Define the directory where the frontend files are located.
+        // This path should be relative to the executable's location.
+        const std::string frontend_directory = "./server/web/frontend";
+
+        if (checkFrontendDirectory(frontend_directory))
+        {
+            // Set up all the API routes and static file serving.
+            setupRoutes(frontend_directory);
+        }
     }
 
     void WebService::Run()
     {
-        // The Run logic is handled by the detached thread in Initialize
+        if (!m_httpServer)
+        {
+            std::cerr << "HttpServer is not initialized. Cannot run." << std::endl;
+            return;
+        }
+        std::cout << "WebService is running on port " << m_port << "." << std::endl;
+        // This is a blocking call that starts the server.
+        m_httpServer->Run(m_port);
     }
 
     void WebService::Stop()
     {
         if (m_httpServer)
         {
+            std::cout << "Stopping WebService..." << std::endl;
             m_httpServer->Stop();
         }
     }
@@ -107,63 +124,15 @@ namespace Core::Web
         };
     };
 
-    void WebService::setupRoutes()
+    void WebService::setupRoutes(const std::string &frontend_dir)
     {
         using json = nlohmann::json;
 
-        m_httpServer->Post(
-            "/api/open_pack",
-            requireAuth(
-                [this](const QNET::Request &req, QNET::Response &res, const Core::Tasks::decoded_token &decoded_token)
-                {
-                    json response_body;
-                    try
-                    {
-                        // Get user ID securely from the token, NOT from the request body.
-                        std::string player_id_str = decoded_token.get_payload_claim("user_id").as_string();
-                        auto user_cards_query = QDB::Query().eq("_id", bsoncxx::oid(player_id_str));
-                        auto player_opt = m_dataService->players.find_one(user_cards_query);
-
-                        if (!player_opt)
-                        {
-                            res.status = 404;
-                            response_body["success"] = false;
-                            response_body["message"] = "Player not found.";
-                            res.set_content(response_body.dump(), "application/json");
-                            return;
-                        }
-
-                        Core::Tasks::PackOpeningResult result = Core::Tasks::OpenPackForPlayer(*m_dataService, *player_opt);
-
-                        response_body["success"] = result.success;
-                        response_body["message"] = result.message;
-                        if (result.success)
-                        {
-                            json cards_array;
-                            for (size_t i = 0; i < result.opened_card_refs.size(); ++i)
-                            {
-                                json card_info;
-                                card_info["name"] = result.opened_card_refs[i].name;
-                                card_info["number"] = result.opened_card_objs[i].number;
-                                cards_array.push_back(card_info);
-                            }
-                            response_body["cards"] = cards_array;
-                            res.status = 200;
-                        }
-                        else
-                        {
-                            res.status = 400;
-                        }
-                    }
-                    catch (const std::exception &e)
-                    {
-                        res.status = 500;
-                        response_body["success"] = false;
-                        response_body["message"] = "An internal server error occurred.";
-                    }
-
-                    res.set_content(response_body.dump(), "application/json");
-                }));
+        if (!m_httpServer)
+        {
+            std::cerr << "HttpServer is not initialized. Cannot set up routes." << std::endl;
+            return;
+        }
 
         m_httpServer->Post("/api/register",
                            [this](const QNET::Request &req, QNET::Response &res)
@@ -233,6 +202,62 @@ namespace Core::Web
                                res.set_content(response_body.dump(), "application/json");
                            });
 
+        m_httpServer->Post(
+            "/api/open_pack",
+            requireAuth(
+                [this](const QNET::Request &req, QNET::Response &res, const Core::Tasks::decoded_token &decoded_token)
+                {
+                    json response_body;
+                    try
+                    {
+                        // Get user ID securely from the token, NOT from the request body.
+                        std::string player_id_str = decoded_token.get_payload_claim("user_id").as_string();
+                        auto user_cards_query = QDB::Query().eq("_id", bsoncxx::oid(player_id_str));
+                        auto player_opt = m_dataService->players.find_one(user_cards_query);
+
+                        if (!player_opt)
+                        {
+                            res.status = 404;
+                            response_body["success"] = false;
+                            response_body["message"] = "Player not found.";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+
+                        Core::Tasks::PackOpeningResult result = Core::Tasks::OpenPackForPlayer(*m_dataService, *player_opt);
+
+                        response_body["success"] = result.success;
+                        response_body["message"] = result.message;
+                        if (result.success)
+                        {
+                            json cards_array;
+                            for (size_t i = 0; i < result.opened_card_refs.size(); ++i)
+                            {
+                                json card_info;
+                                card_info["name"] = result.opened_card_refs[i].name;
+                                card_info["number"] = result.opened_card_objs[i].number;
+                                card_info["image"] = "https://hotpink-octopus-624350.hostingersite.com/character/" +
+                                                     result.opened_card_refs[i].characterId.to_string();
+                                cards_array.push_back(card_info);
+                            }
+                            response_body["cards"] = cards_array;
+                            res.status = 200;
+                        }
+                        else
+                        {
+                            res.status = 400;
+                        }
+                    }
+                    catch (const std::exception &e)
+                    {
+                        res.status = 500;
+                        response_body["success"] = false;
+                        response_body["message"] = "An internal server error occurred.";
+                    }
+
+                    res.set_content(response_body.dump(), "application/json");
+                }));
+
         m_httpServer->Get(
             "/api/inventory",
             requireAuth(
@@ -260,6 +285,8 @@ namespace Core::Web
                                 json card_info;
                                 card_info["name"] = card_ref_opt->name;
                                 card_info["number"] = card_obj.number;
+                                card_info["image"] = "https://hotpink-octopus-624350.hostingersite.com/character/" +
+                                                     card_ref_opt->characterId.to_string();
                                 // Add any other details you want to send to the client
                                 cards_array.push_back(card_info);
                             }
@@ -278,6 +305,21 @@ namespace Core::Web
 
                     res.set_content(response_body.dump(), "application/json");
                 }));
+
+        // --- Static File Serving ---
+
+        // Serve all files from the specified directory at the root URL ("/").
+        // This must be set up AFTER API routes to ensure API calls are not treated as file requests.
+        bool success = m_httpServer->ServeStaticFiles("/", frontend_dir);
+        if (!success)
+        {
+            std::cerr << "Failed to serve static files from directory: " << frontend_dir << std::endl;
+            std::cerr << "Please ensure the directory exists and the executable has permission to read it." << std::endl;
+        }
+        else
+        {
+            std::cout << "Serving static files from: " << frontend_dir << std::endl;
+        }
     }
 
 } // namespace Core::Web

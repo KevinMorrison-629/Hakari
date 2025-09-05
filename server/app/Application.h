@@ -46,8 +46,8 @@ namespace Server
 
         std::shared_ptr<QNET::Server> m_ConnectionManager; ///< @brief Manages network connections and communication.
         std::shared_ptr<QDB::Database> m_Database;
-        std::shared_ptr<Core::Discord::Bot>
-            m_DiscordManager; ///< @brief Manages the Discord bot's connection and event handling.
+        // std::shared_ptr<Core::Discord::Bot>
+        //     m_DiscordManager; ///< @brief Manages the Discord bot's connection and event handling.
         std::shared_ptr<Core::Utils::TaskManager>
             m_TaskManager;                       ///< @brief Manages the thread pool for processing asynchronous tasks.
         std::shared_ptr<dpp::cluster> m_cluster; ///< @brief The dpp::cluster object for interacting with the Discord API.
