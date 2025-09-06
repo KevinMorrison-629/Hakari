@@ -1,4 +1,4 @@
-import { getToken, logout } from './auth.js';
+import { getToken, logout } from '../auth.js';
 
 /**
  * A wrapper around the native fetch API that automatically adds the

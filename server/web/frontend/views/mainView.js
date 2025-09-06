@@ -1,7 +1,7 @@
 import { logout } from '../auth.js';
-import { apiFetch } from '../api.js';
-import { renderInventoryView } from './inventoryView.js'; // Import the new view
-import { renderFriendsView } from './friendsView.js'; // <-- IMPORT THE NEW FRIENDS VIEW
+import { apiFetch } from '../api/api.js';
+import { renderInventoryView } from './inventoryView.js';
+import { renderFriendsView } from './friendsView.js';
 
 let activeTab = 'Store';
 
@@ -59,9 +59,9 @@ function renderContent() {
             renderStoreContent(contentContainer);
             break;
         case 'Inventory':
-            renderInventoryView(contentContainer); // Use the new inventory view function
+            renderInventoryView(contentContainer);
             break;
-        case 'Friends': // <-- ADD THIS CASE
+        case 'Friends':
             renderFriendsView(contentContainer);
             break;
         default:
@@ -97,7 +97,6 @@ function renderPlaceholderContent(container, title) {
 }
 
 async function renderStoreContent(container) {
-    // ... (Store content rendering remains unchanged)
     container.innerHTML = `
         <h1>Store</h1>
         <p class="page-description">Purchase and open card packs to build your collection.</p>

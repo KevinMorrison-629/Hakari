@@ -1,0 +1,32 @@
+/* Styles for Login and Register pages */
+.container-centered {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.container-centered .card {
+    width: 100%;
+    max-width: 420px;
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.card-header h2 {
+    font-size: 1.875rem;
+    /* text-3xl */
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.card-header p {
+    color: #9ca3af;
+    /* text-gray-400 */
+    margin: 0;
+}

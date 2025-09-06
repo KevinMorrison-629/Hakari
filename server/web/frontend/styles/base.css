@@ -1,0 +1,25 @@
+/* --- Base, Typography & Animations --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #111827;
+    /* bg-gray-900 */
+    color: #f9fafb;
+    /* text-white approximation */
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

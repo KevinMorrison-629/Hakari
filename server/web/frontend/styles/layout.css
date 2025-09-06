@@ -1,0 +1,109 @@
+/* --- Main Application Layout --- */
+.main-layout {
+    display: flex;
+    height: 100vh;
+    background-color: #111827;
+    /* bg-gray-900 */
+}
+
+.sidebar {
+    width: 256px;
+    /* w-64 */
+    background-color: #1f2937;
+    /* bg-gray-800 */
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid #374151;
+    /* border-gray-700 */
+    flex-shrink: 0;
+}
+
+.sidebar .brand {
+    font-size: 1.5rem;
+    /* text-2xl */
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    padding: 0 0.5rem;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* space-y-2 */
+}
+
+.sidebar a,
+.sidebar button {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    text-decoration: none;
+    color: #d1d5db;
+    /* text-gray-300 */
+    transition: color 0.2s, background-color 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.sidebar a:hover,
+.sidebar button:hover {
+    background-color: #374151;
+    /* hover:bg-gray-700 */
+    color: white;
+}
+
+.sidebar a.active {
+    background-color: #4f46e5;
+    /* bg-indigo-600 */
+    color: white;
+}
+
+.sidebar .logout-btn {
+    color: #f87171;
+    /* text-red-400 */
+}
+
+.sidebar .logout-btn:hover {
+    background-color: rgba(127, 29, 29, 0.5);
+    /* hover:bg-red-900/50 */
+    color: #fca5a5;
+    /* hover:text-red-300 */
+}
+
+.sidebar .menu-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.75rem;
+}
+
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.main-content h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.main-content .page-description {
+    color: #9ca3af;
+    /* text-gray-400 */
+    margin-top: 0.5rem;
+    margin-bottom: 2rem;
+}

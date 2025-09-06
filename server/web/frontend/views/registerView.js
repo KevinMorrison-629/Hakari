@@ -1,5 +1,6 @@
 import { registerAndLogin } from '../auth.js';
 import { setAuthView } from '../main.js';
+import { showNotification } from '../ui/notification.js';
 
 /**
  * Renders the registration page into a given container element.
@@ -14,7 +15,6 @@ export function renderRegisterView(container) {
                     <p>Get started with your new account.</p>
                 </div>
                 <form id="registerForm">
-                    <div id="message-container"></div>
                     <div class="form-group">
                         <label for="displayName" class="form-label">Display Name</label>
                         <input type="text" id="displayName" class="form-input" placeholder="Your Name" required>
@@ -38,7 +38,6 @@ export function renderRegisterView(container) {
 
     // --- Event Listeners ---
     const registerForm = container.querySelector('#registerForm');
-    const messageContainer = container.querySelector('#message-container');
     const submitButton = container.querySelector('button[type="submit"]');
 
     // Handle form submission
@@ -58,7 +57,7 @@ export function renderRegisterView(container) {
 
         // If the process fails (either at registration or login), show an error.
         if (!result.success) {
-            messageContainer.innerHTML = `<div class="message-box message-error">${result.message}</div>`;
+            showNotification(result.message, true);
             submitButton.disabled = false;
             submitButton.innerHTML = 'Create Account';
         }
@@ -71,4 +70,3 @@ export function renderRegisterView(container) {
         setAuthView('login');
     });
 }
-

@@ -1,5 +1,5 @@
 import { navigate } from './main.js';
-import { apiFetch } from './api.js';
+import { apiFetch } from './api/api.js';
 
 const AUTH_TOKEN_KEY = 'authToken';
 
@@ -110,4 +110,3 @@ export function logout() {
     setToken(null);
     navigate();
 }
-

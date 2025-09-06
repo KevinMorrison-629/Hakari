@@ -1,5 +1,6 @@
 import { login } from '../auth.js';
 import { setAuthView } from '../main.js';
+import { showNotification } from '../ui/notification.js';
 
 /**
  * Renders the login page into a given container element.
@@ -14,7 +15,6 @@ export function renderLoginView(container) {
                     <p>Please sign in to your account.</p>
                 </div>
                 <form id="loginForm">
-                    <div id="message-container"></div>
                     <div class="form-group">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
@@ -34,7 +34,6 @@ export function renderLoginView(container) {
 
     // --- Event Listeners ---
     const loginForm = container.querySelector('#loginForm');
-    const messageContainer = container.querySelector('#message-container');
     const submitButton = container.querySelector('button[type="submit"]');
 
     // Handle form submission
@@ -53,7 +52,7 @@ export function renderLoginView(container) {
 
         // If login fails, show an error message
         if (!result.success) {
-            messageContainer.innerHTML = `<div class="message-box message-error">${result.message}</div>`;
+            showNotification(result.message, true);
             // Re-enable the button
             submitButton.disabled = false;
             submitButton.innerHTML = 'Sign In';

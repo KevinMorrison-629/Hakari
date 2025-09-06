@@ -1,0 +1,156 @@
+/* --- Card Grid for Inventory --- */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.inventory-card {
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.inventory-card h3 {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.inventory-card p {
+    font-family: monospace;
+    color: #818cf8;
+    /* text-indigo-400 */
+    font-size: 0.875rem;
+    margin: 0.5rem 0 0 0;
+}
+
+.card-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* --- Inventory & Deck Builder --- */
+.inventory-layout {
+    display: flex;
+    gap: 2rem;
+    height: calc(100vh - 4rem);
+}
+
+.deck-builder-section {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.deck-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.deck-controls .form-input {
+    flex-grow: 1;
+}
+
+.deck-controls .btn {
+    flex-shrink: 0;
+    width: auto;
+    padding: 0.5rem 1rem;
+}
+
+.deck-hotbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.5rem;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    min-height: 150px;
+}
+
+.deck-slot {
+    aspect-ratio: 2.5 / 3.5;
+    background-color: #374151;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #6b7280;
+    overflow: hidden;
+    transition: background-color 0.2s;
+}
+
+.deck-hotbar.editing .deck-slot {
+    border: 2px dashed #4f46e5;
+    cursor: copy;
+}
+
+.deck-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.inventory-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.inventory-header #inventory-search {
+    max-width: 300px;
+}
+
+#inventory-grid-container {
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.inventory-card[draggable="true"] {
+    cursor: grab;
+}
+
+.card-context-menu {
+    position: fixed;
+    z-index: 1000;
+    width: 180px;
+    background-color: #1f2937;
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+.card-context-menu .menu-item {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    color: #d1d5db;
+}
+
+.card-context-menu .menu-item:hover {
+    background-color: #4f46e5;
+    color: white;
+}

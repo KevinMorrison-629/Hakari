@@ -1,9 +1,10 @@
-import { apiFetch } from '../api.js';
+import { getFriendsData, searchUsers, sendFriendRequest, respondToRequest, removeFriend } from '../api/friendsApi.js';
+import { showNotification } from '../ui/notification.js';
 
 let allFriends = []; // Cache the full friends list for filtering
 
 // --- LIST ITEM RENDERERS ---
-
+// ... (These functions remain the same)
 function renderFriendListItem(user) {
     return `
         <li class="user-list-item" data-display-name="${user.displayName.toLowerCase()}">
@@ -26,7 +27,6 @@ function renderSearchResultItem(user) {
     } else if (user.status === 'pending') {
         actionBtn = `<span class="status-text">Request Sent</span>`;
     }
-
     return `
         <li class="user-list-item">
             <span class="user-display-name">${user.displayName}</span>
@@ -42,7 +42,6 @@ function renderPendingRequestItem(request) {
         ? `<button class="btn btn-sm btn-success respond-request-btn" data-id="${request._id}" data-action="accept">Accept</button>
            <button class="btn btn-sm btn-danger respond-request-btn" data-id="${request._id}" data-action="decline">Decline</button>`
         : `<button class="btn btn-sm btn-danger respond-request-btn" data-id="${request._id}" data-action="cancel">Cancel</button>`;
-
     return `
         <li class="user-list-item">
             <span class="user-display-name">${request.displayName}</span>
@@ -61,8 +60,6 @@ export async function renderFriendsView(container) {
     container.innerHTML = `
         <h1>Friends</h1>
         <p class="page-description">Add, manage, and interact with your friends.</p>
-
-        <!-- Add New Friends -->
         <div class="card friends-card">
             <h2>Add Friends</h2>
             <div class="form-group search-bar">
@@ -71,8 +68,6 @@ export async function renderFriendsView(container) {
             </div>
             <div id="user-search-results-container"></div>
         </div>
-
-        <!-- My Friends -->
         <div class="card friends-card">
             <h2>My Friends (<span id="friends-count">0</span>)</h2>
              <div class="form-group search-bar">
@@ -80,8 +75,6 @@ export async function renderFriendsView(container) {
             </div>
             <ul id="friends-list" class="user-list"></ul>
         </div>
-
-        <!-- Pending Requests -->
         <div class="card friends-card">
             <h2>Pending Requests</h2>
             <ul id="pending-requests-list" class="user-list"></ul>
@@ -96,57 +89,39 @@ export async function renderFriendsView(container) {
 
 async function loadAndRenderAllData() {
     try {
-        const response = await apiFetch('/api/friends');
-        const data = await response.json();
+        const data = await getFriendsData();
+        if (!data.success) throw new Error(data.message || 'Failed to load friends data.');
 
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || 'Failed to load friends data.');
-        }
-
-        // Cache friends for filtering
         allFriends = data.friends || [];
 
-        // Render Friends List
         const friendsListEl = document.getElementById('friends-list');
-        const friendsCountEl = document.getElementById('friends-count');
-        friendsCountEl.textContent = allFriends.length;
-        if (allFriends.length > 0) {
-            friendsListEl.innerHTML = allFriends.map(renderFriendListItem).join('');
-        } else {
-            friendsListEl.innerHTML = '<li class="list-placeholder">You have no friends yet. Use the search above to add some!</li>';
-        }
+        document.getElementById('friends-count').textContent = allFriends.length;
+        friendsListEl.innerHTML = allFriends.length > 0
+            ? allFriends.map(renderFriendListItem).join('')
+            : '<li class="list-placeholder">You have no friends yet. Use the search above to add some!</li>';
 
-
-        // Combine and Render Pending Requests
         const pendingListEl = document.getElementById('pending-requests-list');
         const incoming = (data.incomingRequests || []).map(u => ({ ...u, type: 'incoming' }));
         const outgoing = (data.outgoingRequests || []).map(u => ({ ...u, type: 'outgoing' }));
         const allRequests = [...incoming, ...outgoing];
 
-        if (allRequests.length > 0) {
-            pendingListEl.innerHTML = allRequests.map(renderPendingRequestItem).join('');
-        } else {
-            pendingListEl.innerHTML = '<li class="list-placeholder">No pending requests.</li>';
-        }
-
+        pendingListEl.innerHTML = allRequests.length > 0
+            ? allRequests.map(renderPendingRequestItem).join('')
+            : '<li class="list-placeholder">No pending requests.</li>';
 
     } catch (error) {
         console.error('Error loading friends data:', error);
-        // You can add error messages to the UI here
+        showNotification(error.message, true);
     }
 }
 
 function filterFriends() {
     const query = document.getElementById('friend-filter-input').value.toLowerCase();
     const friendsListEl = document.getElementById('friends-list');
-
     const filteredFriends = allFriends.filter(friend => friend.displayName.toLowerCase().includes(query));
-
-    if (filteredFriends.length > 0) {
-        friendsListEl.innerHTML = filteredFriends.map(renderFriendListItem).join('');
-    } else {
-        friendsListEl.innerHTML = '<li class="list-placeholder">No friends found matching your filter.</li>';
-    }
+    friendsListEl.innerHTML = filteredFriends.length > 0
+        ? filteredFriends.map(renderFriendListItem).join('')
+        : '<li class="list-placeholder">No friends found matching your filter.</li>';
 }
 
 
@@ -154,57 +129,49 @@ function filterFriends() {
 
 function attachFriendsEventListeners() {
     const container = document.getElementById('main-content');
-
-    // Search for new users
     const userSearchBtn = document.getElementById('user-search-btn');
     const userSearchInput = document.getElementById('user-search-input');
     userSearchBtn.addEventListener('click', handleUserSearch);
     userSearchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleUserSearch());
+    document.getElementById('friend-filter-input').addEventListener('input', filterFriends);
 
-    // Filter existing friends
-    const friendFilterInput = document.getElementById('friend-filter-input');
-    friendFilterInput.addEventListener('input', filterFriends);
-
-
-    // --- Event Delegation for dynamic buttons ---
     container.addEventListener('click', async (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
-        // Send Friend Request
         if (target.matches('.send-request-btn')) {
             target.disabled = true;
             target.textContent = 'Sending...';
-            await handleSendRequest(target.dataset.id);
-            // Don't need to reload all data, just update the button
-            target.textContent = 'Sent!';
+            try {
+                const data = await sendFriendRequest(target.dataset.id);
+                if (!data.success) throw new Error(data.message);
+                target.textContent = 'Sent!';
+            } catch (error) {
+                showNotification(error.message, true);
+                target.disabled = false;
+                target.textContent = 'Send Request';
+            }
         }
 
-        // Respond to or Cancel a Friend Request
         if (target.matches('.respond-request-btn')) {
             const userId = target.dataset.id;
             const action = target.dataset.action;
-            // Disable all buttons for this request
             target.closest('.user-actions').querySelectorAll('button').forEach(btn => btn.disabled = true);
-            await handleRespondToRequest(userId, action);
-            await loadAndRenderAllData(); // Refresh everything
+            await respondToRequest(userId, action);
+            await loadAndRenderAllData();
         }
 
-        // Remove Friend
         if (target.matches('.remove-friend-btn')) {
+            if (!confirm('Are you sure you want to remove this friend?')) return;
             target.disabled = true;
             target.textContent = '✖';
-            await handleRemoveFriend(target.dataset.id);
-            await loadAndRenderAllData(); // Refresh everything
+            await removeFriend(target.dataset.id);
+            await loadAndRenderAllData();
         }
 
-        // Placeholder for other friend actions
         const friendAction = target.dataset.action;
         if (['inventory', 'message', 'trade', 'battle'].includes(friendAction)) {
-            console.log(`Action: ${friendAction} on user ${target.dataset.id}`);
-            // Here you would implement the logic for these buttons,
-            // e.g., opening a new view or a modal.
-            alert(`'${friendAction}' button clicked for user ID: ${target.dataset.id}. \n(Functionality not yet implemented.)`);
+            showNotification(`'${friendAction}' button clicked. (Not implemented)`);
         }
     });
 }
@@ -225,62 +192,18 @@ async function handleUserSearch() {
     resultsContainer.innerHTML = `<p class="search-message">Searching...</p>`;
 
     try {
-        const response = await apiFetch(`/api/users/search?name=${encodeURIComponent(query)}`);
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            if (data.users.length > 0) {
-                resultsContainer.innerHTML = `<ul class="user-list">${data.users.map(renderSearchResultItem).join('')}</ul>`;
-            } else {
-                resultsContainer.innerHTML = `<p class="search-message">No users found.</p>`;
-            }
+        const data = await searchUsers(query);
+        if (data.success) {
+            resultsContainer.innerHTML = data.users.length > 0
+                ? `<ul class="user-list">${data.users.map(renderSearchResultItem).join('')}</ul>`
+                : `<p class="search-message">No users found.</p>`;
         } else {
-            resultsContainer.innerHTML = `<p class="search-message message-error">${data.message || 'Search failed.'}</p>`;
+            resultsContainer.innerHTML = `<p class="search-message message-error">${data.message}</p>`;
         }
     } catch (error) {
-        resultsContainer.innerHTML = `<p class="search-message message-error">An error occurred during search.</p>`;
+        resultsContainer.innerHTML = `<p class="search-message message-error">${error.message}</p>`;
     } finally {
         searchBtn.disabled = false;
         searchBtn.textContent = 'Search';
     }
 }
-
-
-// --- API WRAPPER FUNCTIONS ---
-
-async function handleSendRequest(recipientId) {
-    try {
-        const res = await apiFetch('/api/friends/request', {
-            method: 'POST',
-            body: JSON.stringify({ recipientId })
-        });
-        const data = await res.json();
-        if (!res.ok) alert(data.message); // Simple feedback for user
-    } catch (error) {
-        console.error('Failed to send friend request:', error);
-    }
-}
-
-async function handleRespondToRequest(otherUserId, action) {
-    try {
-        await apiFetch('/api/friends/response', {
-            method: 'POST',
-            body: JSON.stringify({ otherUserId, action })
-        });
-    } catch (error) {
-        console.error(`Failed to ${action} friend request:`, error);
-    }
-}
-
-async function handleRemoveFriend(friendId) {
-    // A simple confirmation dialog
-    if (!confirm('Are you sure you want to remove this friend?')) return;
-    try {
-        await apiFetch(`/api/friends/${friendId}`, {
-            method: 'DELETE'
-        });
-    } catch (error) {
-        console.error('Failed to remove friend:', error);
-    }
-}
-

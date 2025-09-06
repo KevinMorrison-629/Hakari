@@ -1,0 +1,137 @@
+.friends-card {
+    width: 100%;
+    max-width: 800px;
+    /* Wider card for the single column layout */
+    margin: 0 auto 2rem auto;
+    /* Center the cards */
+}
+
+.friends-card h2 {
+    font-size: 1.25rem;
+    margin: -0.5rem 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #374151;
+}
+
+.search-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.search-bar .form-input {
+    flex-grow: 1;
+}
+
+.search-bar .btn {
+    width: auto;
+    flex-shrink: 0;
+}
+
+.user-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.user-list-item:hover {
+    background-color: #374151;
+}
+
+.user-display-name {
+    font-weight: 500;
+}
+
+.user-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-text {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 0 0.5rem;
+}
+
+.search-message,
+.list-placeholder {
+    text-align: center;
+    color: #9ca3af;
+    padding: 1rem;
+    font-style: italic;
+}
+
+/* Small Buttons for friend actions */
+.btn.btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    width: auto;
+    line-height: 1;
+}
+
+.btn-secondary {
+    background-color: #4b5563;
+    /* bg-gray-600 */
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #6b7280;
+    /* hover:bg-gray-500 */
+}
+
+.btn-success {
+    background-color: #16a34a;
+    /* bg-green-600 */
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background-color: #15803d;
+    /* hover:bg-green-700 */
+}
+
+.btn-danger {
+    background-color: #dc2626;
+    /* bg-red-600 */
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #b91c1c;
+    /* hover:bg-red-700 */
+}
+
+/* Status Tags for Pending Requests */
+.status-tag {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-incoming {
+    background-color: #059669;
+    /* bg-emerald-600 */
+}
+
+.status-outgoing {
+    background-color: #ea580c;
+    /* bg-orange-600 */
+}
