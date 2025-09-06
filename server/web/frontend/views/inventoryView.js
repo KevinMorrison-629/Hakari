@@ -51,7 +51,8 @@ export async function renderInventoryView(container) {
 async function fetchAndRenderCollection() {
     const gridContainer = document.getElementById('inventory-grid-container');
     try {
-        const data = await loadCollectionData();
+        // Use '@me' to fetch the collection for the currently authenticated user.
+        const data = await loadCollectionData('@me');
         if (data.success) {
             fullInventory = data.inventory || [];
             decks = data.decks || [];

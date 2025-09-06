@@ -1,10 +1,11 @@
 import { getFriendsData, searchUsers, sendFriendRequest, respondToRequest, removeFriend } from '../api/friendsApi.js';
+import { loadCollectionData } from '../api/collectionApi.js';
 import { showNotification } from '../ui/notification.js';
 
 let allFriends = []; // Cache the full friends list for filtering
 
 // --- LIST ITEM RENDERERS ---
-// ... (These functions remain the same)
+
 function renderFriendListItem(user) {
     return `
         <li class="user-list-item" data-display-name="${user.displayName.toLowerCase()}">
@@ -170,7 +171,11 @@ function attachFriendsEventListeners() {
         }
 
         const friendAction = target.dataset.action;
-        if (['inventory', 'message', 'trade', 'battle'].includes(friendAction)) {
+        if (friendAction === 'inventory') {
+            const userId = target.dataset.id;
+            const displayName = target.closest('.user-list-item').querySelector('.user-display-name').textContent;
+            handleViewInventory(userId, displayName);
+        } else if (['message', 'trade', 'battle'].includes(friendAction)) {
             showNotification(`'${friendAction}' button clicked. (Not implemented)`);
         }
     });
@@ -207,3 +212,63 @@ async function handleUserSearch() {
         searchBtn.textContent = 'Search';
     }
 }
+
+// --- FRIEND COLLECTION VIEW ---
+
+/**
+ * Renders a view of a friend's card collection.
+ * @param {object} user - The user object ({ _id, displayName }).
+ * @param {Array} inventory - The user's inventory of card objects.
+ */
+function renderFriendCollectionView(user, inventory) {
+    const container = document.getElementById('main-content');
+    container.innerHTML = `
+        <div class="friends-collection-view">
+            <div class="view-header" style="display: flex; align-items: center; margin-bottom: 1rem; gap: 1rem;">
+                <button id="back-to-friends-btn" class="btn">&larr; Back to Friends</button>
+                <h1>${user.displayName}'s Collection</h1>
+            </div>
+            <div id="friend-inventory-grid" class="card-grid"></div>
+        </div>
+    `;
+
+    const gridContainer = document.getElementById('friend-inventory-grid');
+    if (inventory && inventory.length > 0) {
+        gridContainer.innerHTML = inventory.map(card => `
+            <div class="inventory-card" data-card-id="${card.id}">
+                <img src="${card.image}" alt="${card.name}" class="card-image" />
+                <h3>${card.name}</h3>
+                <p># ${card.number}</p>
+            </div>
+        `).join('');
+    } else {
+        gridContainer.innerHTML = `<p class="list-placeholder">${user.displayName} has no cards in their collection yet.</p>`;
+    }
+
+    document.getElementById('back-to-friends-btn').addEventListener('click', () => {
+        renderFriendsView(container);
+    });
+}
+
+/**
+ * Handles the logic for fetching and displaying a friend's inventory.
+ * @param {string} userId - The ID of the friend.
+ * @param {string} displayName - The display name of the friend.
+ */
+async function handleViewInventory(userId, displayName) {
+    const container = document.getElementById('main-content');
+    container.innerHTML = `<div class="loader">Loading ${displayName}'s collection...</div>`;
+    try {
+        const data = await loadCollectionData(userId);
+        if (data.success) {
+            renderFriendCollectionView({ _id: userId, displayName }, data.inventory);
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        showNotification(`Error loading collection: ${error.message}`, true);
+        // On error, render the main friends view again so the user isn't stuck.
+        renderFriendsView(container);
+    }
+}
+

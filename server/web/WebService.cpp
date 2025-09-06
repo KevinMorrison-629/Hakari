@@ -515,16 +515,27 @@ namespace Core::Web
 
                     res.set_content(response_body.dump(), "application/json");
                 }));
+
         m_httpServer->Get(
-            "/api/collection",
+            "/api/collection/:userId",
             requireAuth(
                 [this](const QNET::Request &req, QNET::Response &res, const Core::Tasks::decoded_token &decoded_token)
                 {
                     json response_body;
                     try
                     {
-                        std::string user_id_str = decoded_token.get_payload_claim("user_id").as_string();
-                        auto player_query = QDB::Query().eq("_id", bsoncxx::oid(user_id_str));
+                        std::string requested_user_id_param = req.matches[1].str();
+                        std::string current_user_id_str = decoded_token.get_payload_claim("user_id").as_string();
+                        std::string target_user_id_str = requested_user_id_param;
+
+                        if (requested_user_id_param == "@me")
+                        {
+                            target_user_id_str = current_user_id_str;
+                        }
+
+                        bool is_owner = (target_user_id_str == current_user_id_str);
+
+                        auto player_query = QDB::Query().eq("_id", bsoncxx::oid(target_user_id_str));
                         auto player_opt = m_dataService->players.find_one(player_query);
 
                         if (!player_opt)
@@ -536,19 +547,7 @@ namespace Core::Web
                             return;
                         }
 
-                        const int required_deck_count = 3;
-                        if (player_opt->decks.size() < required_deck_count)
-                        {
-                            int decks_to_add = required_deck_count - player_opt->decks.size();
-                            auto update = QDB::Update();
-                            for (int i = 0; i < decks_to_add; ++i)
-                            {
-                                update.push("decks", std::vector<bsoncxx::oid>());
-                                player_opt->decks.push_back({});
-                            }
-                            m_dataService->players.update_one(player_query, update);
-                        }
-
+                        // --- Always fetch inventory ---
                         auto user_cards_query = QDB::Query().in("_id", player_opt->inventory);
                         std::vector<Core::Data::CardObject> user_card_objects =
                             m_dataService->card_objects.find(user_cards_query);
@@ -569,21 +568,38 @@ namespace Core::Web
                                 inventory_array.push_back(card_info);
                             }
                         }
+                        response_body["inventory"] = inventory_array;
 
-                        json decks_array = json::array();
-                        for (const auto &deck : player_opt->decks)
+                        // --- Conditionally fetch decks for owner ---
+                        if (is_owner)
                         {
-                            json deck_json = json::array();
-                            for (const auto &card_oid : deck)
+                            const int required_deck_count = 3;
+                            if (player_opt->decks.size() < required_deck_count)
                             {
-                                deck_json.push_back(card_oid.to_string());
+                                int decks_to_add = required_deck_count - player_opt->decks.size();
+                                auto update = QDB::Update();
+                                for (int i = 0; i < decks_to_add; ++i)
+                                {
+                                    update.push("decks", std::vector<bsoncxx::oid>());
+                                    player_opt->decks.push_back({});
+                                }
+                                m_dataService->players.update_one(player_query, update);
                             }
-                            decks_array.push_back(deck_json);
+
+                            json decks_array = json::array();
+                            for (const auto &deck : player_opt->decks)
+                            {
+                                json deck_json = json::array();
+                                for (const auto &card_oid : deck)
+                                {
+                                    deck_json.push_back(card_oid.to_string());
+                                }
+                                decks_array.push_back(deck_json);
+                            }
+                            response_body["decks"] = decks_array;
                         }
 
                         response_body["success"] = true;
-                        response_body["inventory"] = inventory_array;
-                        response_body["decks"] = decks_array;
                         res.status = 200;
                     }
                     catch (const std::exception &e)
@@ -594,6 +610,7 @@ namespace Core::Web
                     }
                     res.set_content(response_body.dump(), "application/json");
                 }));
+
         m_httpServer->Put(
             "/api/decks",
             requireAuth(

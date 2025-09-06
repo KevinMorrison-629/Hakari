@@ -1,11 +1,12 @@
 import { apiFetch } from './api.js';
 
 /**
- * Fetches the user's complete collection, including inventory and decks.
- * @returns {Promise<object>} The collection data.
+ * Fetches a user's collection. For the current user, use '@me' as the userId to get deck info.
+ * @param {string} userId The ID of the user whose collection to fetch, or '@me' for the current user.
+ * @returns {Promise<object>} The collection data, which may include a 'decks' array for the owner.
  */
-export async function loadCollectionData() {
-    const res = await apiFetch('/api/collection');
+export async function loadCollectionData(userId) {
+    const res = await apiFetch(`/api/collection/${userId}`);
     if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Failed to fetch collection.' }));
         throw new Error(errorData.message);
