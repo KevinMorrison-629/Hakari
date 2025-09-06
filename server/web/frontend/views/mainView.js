@@ -1,6 +1,7 @@
 import { logout } from '../auth.js';
 import { apiFetch } from '../api.js';
 import { renderInventoryView } from './inventoryView.js'; // Import the new view
+import { renderFriendsView } from './friendsView.js'; // <-- IMPORT THE NEW FRIENDS VIEW
 
 let activeTab = 'Store';
 
@@ -59,6 +60,9 @@ function renderContent() {
             break;
         case 'Inventory':
             renderInventoryView(contentContainer); // Use the new inventory view function
+            break;
+        case 'Friends': // <-- ADD THIS CASE
+            renderFriendsView(contentContainer);
             break;
         default:
             renderPlaceholderContent(contentContainer, activeTab);

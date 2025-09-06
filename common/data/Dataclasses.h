@@ -228,15 +228,23 @@ namespace Core::Data
         std::vector<std::vector<bsoncxx::oid>> decks = {std::vector<bsoncxx::oid>(), std::vector<bsoncxx::oid>(),
                                                         std::vector<bsoncxx::oid>()};
 
+        std::vector<bsoncxx::oid> friends = {};
+        std::vector<bsoncxx::oid> friend_requests_sent = {};
+        std::vector<bsoncxx::oid> friend_requests_received = {};
+
         virtual std::unordered_map<std::string, QDB::FieldValue> to_fields() const override
         {
             std::unordered_map<std::string, QDB::FieldValue> fields;
             fields["discord_id"] = discord_id;
-            fields["display_name"] = display_name;
-            fields["inventory"] = inventory;
-            fields["decks"] = decks;
+            fields["displayName"] = display_name;
             fields["email"] = email;
             fields["password_hash"] = password_hash;
+            fields["inventory"] = inventory;
+            fields["decks"] = decks;
+            fields["friends"] = friends;
+            fields["friendRequestsSent"] = friend_requests_sent;
+            fields["friendRequestsReceived"] = friend_requests_received;
+
             return fields;
         }
 
@@ -244,11 +252,14 @@ namespace Core::Data
         {
             QDB::get_field(fields, "_id", this->_id);
             QDB::get_field(fields, "discord_id", discord_id);
-            QDB::get_field(fields, "display_name", display_name);
-            QDB::get_field(fields, "inventory", inventory);
-            QDB::get_field(fields, "decks", decks);
+            QDB::get_field(fields, "displayName", display_name);
             QDB::get_field(fields, "email", email);
             QDB::get_field(fields, "password_hash", password_hash);
+            QDB::get_field(fields, "inventory", inventory);
+            QDB::get_field(fields, "decks", decks);
+            QDB::get_field(fields, "friends", friends);
+            QDB::get_field(fields, "friendRequestsSent", friend_requests_sent);
+            QDB::get_field(fields, "friendRequestsReceived", friend_requests_received);
         }
     };
 
