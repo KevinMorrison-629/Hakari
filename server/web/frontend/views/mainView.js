@@ -1,5 +1,6 @@
 import { logout } from '../auth.js';
 import { apiFetch } from '../api.js';
+import { renderInventoryView } from './inventoryView.js'; // Import the new view
 
 let activeTab = 'Store';
 
@@ -44,14 +45,10 @@ export function renderMainView(container) {
         </div>
     `;
 
-    // Attach event listeners and render initial content
     attachEventListeners();
     renderContent();
 }
 
-/**
- * Renders the content for the currently active tab.
- */
 function renderContent() {
     const contentContainer = document.getElementById('main-content');
     if (!contentContainer) return;
@@ -61,7 +58,7 @@ function renderContent() {
             renderStoreContent(contentContainer);
             break;
         case 'Inventory':
-            renderInventoryContent(contentContainer);
+            renderInventoryView(contentContainer); // Use the new inventory view function
             break;
         default:
             renderPlaceholderContent(contentContainer, activeTab);
@@ -69,21 +66,18 @@ function renderContent() {
     }
 }
 
-/**
- * Attaches event listeners for navigation and logout.
- */
 function attachEventListeners() {
     document.getElementById('logout-btn').addEventListener('click', logout);
 
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            activeTab = e.currentTarget.dataset.tab;
+            const newTab = e.currentTarget.dataset.tab;
+            if (activeTab === newTab) return; // Do nothing if clicking the same tab
 
-            // Update active class
+            activeTab = newTab;
             document.querySelector('.nav-link.active').classList.remove('active');
             e.currentTarget.classList.add('active');
-
             renderContent();
         });
     });
@@ -99,6 +93,7 @@ function renderPlaceholderContent(container, title) {
 }
 
 async function renderStoreContent(container) {
+    // ... (Store content rendering remains unchanged)
     container.innerHTML = `
         <h1>Store</h1>
         <p class="page-description">Purchase and open card packs to build your collection.</p>
@@ -131,7 +126,7 @@ async function renderStoreContent(container) {
                                 <h3>${card.name}</h3>
                                 <p># ${card.number}</p>
                             </div>
-                        `).join('').replace(/border-bottom: 1px solid #374151;(?![\s\S]*border-bottom: 1px solid #374151;)/, '')}
+                        `).join('')}
                     </div>`;
             } else {
                 messageContainer.innerHTML = `<div class="message-box message-error">${data.message || 'Failed to open pack.'}</div>`;
@@ -143,38 +138,4 @@ async function renderStoreContent(container) {
             btn.innerHTML = 'Open Pack';
         }
     });
-}
-
-async function renderInventoryContent(container) {
-    container.innerHTML = `
-        <h1>My Inventory</h1>
-        <p class="page-description">All of the cards you've collected.</p>
-        <div id="inventory-grid-container">Loading your collection...</div>
-    `;
-
-    const gridContainer = document.getElementById('inventory-grid-container');
-
-    try {
-        const res = await apiFetch('/api/inventory'); // GET is default
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            if (data.inventory.length > 0) {
-                gridContainer.className = 'card-grid';
-                gridContainer.innerHTML = data.inventory.map(card => `
-                    <div class="inventory-card">
-                        <img src="${card.image}" alt="${card.name}" class="card-image" />
-                        <h3>${card.name}</h3>
-                        <p># ${card.number}</p>
-                    </div>
-                `).join('');
-            } else {
-                gridContainer.innerHTML = `<p>Your inventory is empty. Open a pack in the store to get started!</p>`;
-            }
-        } else {
-            gridContainer.innerHTML = `<div class="message-box message-error">${data.message || 'Failed to fetch inventory.'}</div>`;
-        }
-    } catch (error) {
-        gridContainer.innerHTML = `<div class="message-box message-error">Could not connect to the server.</div>`;
-    }
 }

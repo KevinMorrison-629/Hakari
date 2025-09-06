@@ -71,8 +71,13 @@ namespace Core::Data
          */
         std::optional<Player> find_player_by_display_name(const std::string &display_name)
         {
-            // Use a case-insensitive query for display names
             auto query = QDB::Query().eq("display_name", display_name);
+            return players.find_one(query);
+        }
+
+        std::optional<Player> find_player_by_id(const std::string &id)
+        {
+            auto query = QDB::Query().eq("_id", bsoncxx::oid(id));
             return players.find_one(query);
         }
     };

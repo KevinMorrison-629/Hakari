@@ -225,6 +225,8 @@ namespace Core::Data
         std::string email = "";
         std::string password_hash = "";
         std::vector<bsoncxx::oid> inventory; // A list of CardObject IDs
+        std::vector<std::vector<bsoncxx::oid>> decks = {std::vector<bsoncxx::oid>(), std::vector<bsoncxx::oid>(),
+                                                        std::vector<bsoncxx::oid>()};
 
         virtual std::unordered_map<std::string, QDB::FieldValue> to_fields() const override
         {
@@ -232,6 +234,7 @@ namespace Core::Data
             fields["discord_id"] = discord_id;
             fields["display_name"] = display_name;
             fields["inventory"] = inventory;
+            fields["decks"] = decks;
             fields["email"] = email;
             fields["password_hash"] = password_hash;
             return fields;
@@ -243,6 +246,7 @@ namespace Core::Data
             QDB::get_field(fields, "discord_id", discord_id);
             QDB::get_field(fields, "display_name", display_name);
             QDB::get_field(fields, "inventory", inventory);
+            QDB::get_field(fields, "decks", decks);
             QDB::get_field(fields, "email", email);
             QDB::get_field(fields, "password_hash", password_hash);
         }

@@ -1,6 +1,7 @@
 #include "WebService.h"
 
 #include "nlohmann/json.hpp"
+#include <algorithm> // Required for std::sort
 #include <filesystem>
 #include <iostream>
 
@@ -259,51 +260,180 @@ namespace Core::Web
                     res.set_content(response_body.dump(), "application/json");
                 }));
 
+        // REPLACES /api/inventory: Fetches inventory AND decks for the player.
         m_httpServer->Get(
-            "/api/inventory",
+            "/api/collection",
             requireAuth(
                 [this](const QNET::Request &req, QNET::Response &res, const Core::Tasks::decoded_token &decoded_token)
                 {
                     json response_body;
                     try
                     {
-                        // Get user ID securely from the token
                         std::string user_id_str = decoded_token.get_payload_claim("user_id").as_string();
+                        auto player_query = QDB::Query().eq("_id", bsoncxx::oid(user_id_str));
+                        auto player_opt = m_dataService->players.find_one(player_query);
 
-                        // Find all card objects owned by this player
-                        auto user_cards_query = QDB::Query().eq("ownerId", bsoncxx::oid(user_id_str));
+                        if (!player_opt)
+                        {
+                            res.status = 404;
+                            response_body["success"] = false;
+                            response_body["message"] = "Player not found.";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+
+                        // Ensure player has exactly 3 decks.
+                        const int required_deck_count = 3;
+                        if (player_opt->decks.size() < required_deck_count)
+                        {
+                            int decks_to_add = required_deck_count - player_opt->decks.size();
+                            auto update = QDB::Update();
+                            for (int i = 0; i < decks_to_add; ++i)
+                            {
+                                // Add to the update operation for the database
+                                update.push("decks", std::vector<bsoncxx::oid>());
+
+                                // Also add to the in-memory object to ensure the response is correct
+                                player_opt->decks.push_back({});
+                            }
+                            m_dataService->players.update_one(player_query, update);
+                        }
+
+                        // 1. Fetch Inventory
+                        auto user_cards_query = QDB::Query().in("_id", player_opt->inventory);
                         std::vector<Core::Data::CardObject> user_card_objects =
                             m_dataService->card_objects.find(user_cards_query);
 
-                        json cards_array = json::array();
+                        json inventory_array = json::array();
                         for (const auto &card_obj : user_card_objects)
                         {
-                            // For each card object, find its corresponding reference data (like the name)
-                            auto card_ref_query = QDB::Query().eq("_id", card_obj.cardReferenceId);
-                            auto card_ref_opt = m_dataService->card_references.find_one(card_ref_query);
+                            auto card_ref_opt =
+                                m_dataService->card_references.find_one(QDB::Query().eq("_id", card_obj.cardReferenceId));
                             if (card_ref_opt)
                             {
                                 json card_info;
+                                card_info["id"] = card_obj.get_id_str(); // IMPORTANT: Send the CardObject ID
                                 card_info["name"] = card_ref_opt->name;
                                 card_info["number"] = card_obj.number;
                                 card_info["image"] = "https://hotpink-octopus-624350.hostingersite.com/character/" +
                                                      card_ref_opt->characterId.to_string();
-                                // Add any other details you want to send to the client
-                                cards_array.push_back(card_info);
+                                inventory_array.push_back(card_info);
                             }
                         }
 
+                        // 2. Fetch Decks
+                        json decks_array = json::array();
+                        for (const auto &deck : player_opt->decks)
+                        {
+                            json deck_json = json::array();
+                            for (const auto &card_oid : deck)
+                            {
+                                deck_json.push_back(card_oid.to_string());
+                            }
+                            decks_array.push_back(deck_json);
+                        }
+
                         response_body["success"] = true;
-                        response_body["inventory"] = cards_array;
+                        response_body["inventory"] = inventory_array;
+                        response_body["decks"] = decks_array;
                         res.status = 200;
                     }
                     catch (const std::exception &e)
                     {
                         res.status = 500;
                         response_body["success"] = false;
-                        response_body["message"] = "An internal server error occurred while fetching inventory.";
+                        response_body["message"] = "An internal server error occurred while fetching collection.";
                     }
+                    res.set_content(response_body.dump(), "application/json");
+                }));
 
+        // NEW: Update an existing deck by its index.
+        m_httpServer->Put(
+            "/api/decks",
+            requireAuth(
+                [this](const QNET::Request &req, QNET::Response &res, const Core::Tasks::decoded_token &decoded_token)
+                {
+                    json response_body;
+                    try
+                    {
+                        json request_data = json::parse(req.body);
+
+                        if (!request_data.contains("deckIndex"))
+                        {
+                            res.status = 400;
+                            response_body["success"] = false;
+                            response_body["message"] = "Request body must include 'deckIndex'.";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+                        int deckIndex = request_data["deckIndex"].get<int>();
+
+                        std::vector<bsoncxx::oid> new_deck_oids;
+                        for (const auto &item : request_data["cards"])
+                        {
+                            if (item.is_string())
+                            {
+                                new_deck_oids.emplace_back(bsoncxx::oid(item.get<std::string>()));
+                            }
+                        }
+
+                        std::string user_id_str = decoded_token.get_payload_claim("user_id").as_string();
+                        auto filter = QDB::Query().eq("_id", bsoncxx::oid(user_id_str));
+
+                        // First, verify the player exists and the deck index is valid.
+                        auto player_opt = m_dataService->players.find_one(filter);
+                        if (!player_opt)
+                        {
+                            res.status = 404;
+                            response_body["success"] = false;
+                            response_body["message"] = "Could not save deck. Player not found.";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+                        if (deckIndex < 0 || deckIndex >= player_opt->decks.size())
+                        {
+                            res.status = 400;
+                            response_body["success"] = false;
+                            response_body["message"] = "Could not save deck. Invalid deck index.";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+
+                        // --- NEW LOGIC: Pre-check if the deck has changed ---
+                        auto &original_deck_oids = player_opt->decks[deckIndex];
+
+                        // To perform an order-agnostic comparison, we sort copies of both vectors.
+                        auto sorted_original = original_deck_oids;
+                        std::sort(sorted_original.begin(), sorted_original.end());
+
+                        auto sorted_new = new_deck_oids;
+                        std::sort(sorted_new.begin(), sorted_new.end());
+
+                        if (sorted_original == sorted_new)
+                        {
+                            // The decks are identical, no need to update the database.
+                            res.status = 200;
+                            response_body["success"] = true;
+                            response_body["message"] = "Deck saved successfully (no changes detected).";
+                            res.set_content(response_body.dump(), "application/json");
+                            return;
+                        }
+                        // --- END NEW LOGIC ---
+
+                        // If we reach here, the decks are different, so proceed with the update.
+                        auto update = QDB::Update().set("decks." + std::to_string(deckIndex), new_deck_oids);
+                        m_dataService->players.update_one(filter, update);
+
+                        res.status = 200;
+                        response_body["success"] = true;
+                        response_body["message"] = "Deck saved successfully.";
+                    }
+                    catch (const std::exception &e)
+                    {
+                        res.status = 500;
+                        response_body["success"] = false;
+                        response_body["message"] = "Server error while saving deck.";
+                    }
                     res.set_content(response_body.dump(), "application/json");
                 }));
 
