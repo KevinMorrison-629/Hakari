@@ -59,23 +59,47 @@ export async function login(email, password) {
 
 /**
  * Handles the user registration process.
+ * @param {string} displayName
  * @param {string} email
  * @param {string} password
  * @returns {Promise<{success: boolean, message: string}>}
  */
-export async function register(email, password) {
+export async function register(displayName, email, password) {
     try {
+        // Uses native fetch because the user isn't authenticated yet
         const response = await fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ displayName, email, password }),
         });
         const data = await response.json();
-        return { success: data.success, message: data.message || 'An error occurred.' };
+        // Return success based on status code as well, for more robust error handling
+        return { success: response.ok, message: data.message || 'An error occurred.' };
     } catch (error) {
         console.error('Registration error:', error);
         return { success: false, message: 'Could not connect to the server.' };
     }
+}
+
+/**
+ * Registers a user and then immediately attempts to log them in.
+ * @param {string} displayName
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function registerAndLogin(displayName, email, password) {
+    // Step 1: Attempt to register the user.
+    const registerResult = await register(displayName, email, password);
+
+    // If registration fails, return the error message immediately.
+    if (!registerResult.success) {
+        return registerResult;
+    }
+
+    // Step 2: If registration succeeds, automatically log the user in.
+    // The login function already handles setting the token and navigating.
+    return await login(email, password);
 }
 
 

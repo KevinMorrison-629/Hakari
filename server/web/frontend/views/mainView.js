@@ -13,10 +13,10 @@ export function renderMainView(container) {
         { id: 'Store', icon: '🛒', name: 'Store' },
         { id: 'Friends', icon: '👥', name: 'Friends' },
         { id: 'Chat', icon: '💬', name: 'Chat' },
-        { id: 'Connect Discord', icon: '🔗', name: 'Connect Discord' },
         { id: 'Leaderboard', icon: '🏆', name: 'Leaderboard' },
         { id: 'Battle', icon: '⚔️', name: 'Battle' },
         { id: 'Trading House', icon: '🔄', name: 'Trading House' },
+        { id: 'Connect Discord', icon: '🔗', name: 'Connect Discord' },
     ];
 
     container.innerHTML = `

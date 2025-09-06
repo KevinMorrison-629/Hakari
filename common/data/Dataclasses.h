@@ -221,6 +221,7 @@ namespace Core::Data
     struct Player : public QDB::Document
     {
         int64_t discord_id = 0;
+        std::string display_name = "";
         std::string email = "";
         std::string password_hash = "";
         std::vector<bsoncxx::oid> inventory; // A list of CardObject IDs
@@ -229,6 +230,7 @@ namespace Core::Data
         {
             std::unordered_map<std::string, QDB::FieldValue> fields;
             fields["discord_id"] = discord_id;
+            fields["display_name"] = display_name;
             fields["inventory"] = inventory;
             fields["email"] = email;
             fields["password_hash"] = password_hash;
@@ -239,6 +241,7 @@ namespace Core::Data
         {
             QDB::get_field(fields, "_id", this->_id);
             QDB::get_field(fields, "discord_id", discord_id);
+            QDB::get_field(fields, "display_name", display_name);
             QDB::get_field(fields, "inventory", inventory);
             QDB::get_field(fields, "email", email);
             QDB::get_field(fields, "password_hash", password_hash);

@@ -62,6 +62,19 @@ namespace Core::Data
             auto query = QDB::Query().eq("email", email);
             return players.find_one(query);
         }
+
+        /**
+         * @brief Finds a player by their unique display name.
+         * @param display_name The display name to search for (case-insensitive).
+         * @return An optional containing the Player if found.
+         * @note Assumes the 'Player' dataclass has a 'display_name' field.
+         */
+        std::optional<Player> find_player_by_display_name(const std::string &display_name)
+        {
+            // Use a case-insensitive query for display names
+            auto query = QDB::Query().eq("display_name", display_name);
+            return players.find_one(query);
+        }
     };
 
 } // namespace Core::Data

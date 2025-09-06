@@ -143,9 +143,10 @@ namespace Core::Web
                                    json request_data = json::parse(req.body);
                                    std::string email = request_data["email"].get<std::string>();
                                    std::string password = request_data["password"].get<std::string>();
+                                   std::string displayName = request_data["displayName"];
 
                                    Core::Tasks::RegistrationResult result =
-                                       Core::Tasks::RegisterUser(*m_dataService, email, password);
+                                       Core::Tasks::RegisterUser(*m_dataService, email, password, displayName);
 
                                    response_body["success"] = result.success;
                                    response_body["message"] = result.message;

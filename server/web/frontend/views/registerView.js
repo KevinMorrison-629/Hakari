@@ -1,31 +1,35 @@
-import { login } from '../auth.js';
+import { registerAndLogin } from '../auth.js';
 import { setAuthView } from '../main.js';
 
 /**
- * Renders the login page into a given container element.
+ * Renders the registration page into a given container element.
  * @param {HTMLElement} container - The element to render the page in.
  */
-export function renderLoginView(container) {
+export function renderRegisterView(container) {
     container.innerHTML = `
         <div class="container-centered">
             <div class="card">
                 <div class="card-header">
-                    <h2>Welcome Back!</h2>
-                    <p>Please sign in to your account.</p>
+                    <h2>Create Account</h2>
+                    <p>Get started with your new account.</p>
                 </div>
-                <form id="loginForm">
+                <form id="registerForm">
                     <div id="message-container"></div>
+                    <div class="form-group">
+                        <label for="displayName" class="form-label">Display Name</label>
+                        <input type="text" id="displayName" class="form-input" placeholder="Your Name" required>
+                    </div>
                     <div class="form-group">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
                     </div>
                     <div class="form-group">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                        <input type="password" id="password" class="form-input" placeholder="Choose a strong password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
                     <button type="button" id="toggle-view-btn" class="btn btn-link">
-                        Don't have an account? Sign Up
+                        Already have an account? Sign In
                     </button>
                 </form>
             </div>
@@ -33,35 +37,38 @@ export function renderLoginView(container) {
     `;
 
     // --- Event Listeners ---
-    const loginForm = container.querySelector('#loginForm');
+    const registerForm = container.querySelector('#registerForm');
     const messageContainer = container.querySelector('#message-container');
     const submitButton = container.querySelector('button[type="submit"]');
 
     // Handle form submission
-    loginForm.addEventListener('submit', async (event) => {
+    registerForm.addEventListener('submit', async (event) => {
         event.preventDefault();
 
+        const displayName = container.querySelector('#displayName').value;
         const email = container.querySelector('#email').value;
         const password = container.querySelector('#password').value;
 
         // Disable button and show loading state
         submitButton.disabled = true;
-        submitButton.innerHTML = `<span class="animate-spin">⏳</span> Signing In...`;
+        submitButton.innerHTML = `<span class="animate-spin">⚙️</span> Creating Account...`;
 
-        // The login function from auth.js handles successful navigation
-        const result = await login(email, password);
+        // Use the new function that handles both steps
+        const result = await registerAndLogin(displayName, email, password);
 
-        // If login fails, show an error message
+        // If the process fails (either at registration or login), show an error.
         if (!result.success) {
             messageContainer.innerHTML = `<div class="message-box message-error">${result.message}</div>`;
-            // Re-enable the button
             submitButton.disabled = false;
-            submitButton.innerHTML = 'Sign In';
+            submitButton.innerHTML = 'Create Account';
         }
+        // If successful, the `login` function within `registerAndLogin` will automatically
+        // navigate to the main app view, so we don't need an 'else' block.
     });
 
-    // Handle clicks on the "Sign Up" button
+    // Handle clicks on the "Sign In" button
     container.querySelector('#toggle-view-btn').addEventListener('click', () => {
-        setAuthView('register');
+        setAuthView('login');
     });
 }
+

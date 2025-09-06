@@ -66,11 +66,21 @@ namespace Core::Tasks
     }
 
     inline RegistrationResult RegisterUser(Core::Data::DataService &dataService, const std::string &email,
-                                           const std::string &password)
+                                           const std::string &password, const std::string &displayName)
     {
+        if (displayName.length() < 3 || displayName.length() > 16)
+        {
+            return {false, "Display name must be between 3 and 16 characters."};
+        }
+
         if (dataService.find_player_by_email(email))
         {
             return {false, "A user with this email already exists."};
+        }
+
+        if (dataService.find_player_by_display_name(displayName))
+        {
+            return {false, "A user with this display name already exists."};
         }
 
         char hashed_password[crypto_pwhash_STRBYTES];
