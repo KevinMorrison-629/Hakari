@@ -35,7 +35,7 @@ namespace Core::Tasks
     inline std::string CreateJwtForPlayer(const Core::Data::Player &player)
     {
         auto token = jwt::create()
-                         .set_issuer("CardForge")
+                         .set_issuer("HakariBot")
                          .set_type("JWS")
                          .set_payload_claim("user_id", jwt::claim(player.get_id_str()))
                          .set_payload_claim("email", jwt::claim(player.email))
@@ -53,7 +53,7 @@ namespace Core::Tasks
             // Use nlohmann_json trait for the verifier
             auto verifier = jwt::verify<jwt::traits::nlohmann_json>()
                                 .allow_algorithm(jwt::algorithm::hs256{JWT_SECRET})
-                                .with_issuer("CardForge");
+                                .with_issuer("HakariBot");
             auto decoded = jwt::decode<jwt::traits::nlohmann_json>(token);
             verifier.verify(decoded);
             return decoded;

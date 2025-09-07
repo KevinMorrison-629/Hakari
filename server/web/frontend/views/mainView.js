@@ -25,7 +25,7 @@ export function renderMainView(container) {
         <div class="main-layout">
             <nav class="sidebar">
                 <div>
-                    <div class="brand">CardForge</div>
+                    <div class="brand">HakariBot</div>
                     <ul id="nav-menu">
                         ${menuItems.map(item => `
                             <li>

@@ -1,17 +1,43 @@
 import { loadCollectionData, saveActiveDeck } from '../api/collectionApi.js';
 import { showNotification } from '../ui/notification.js';
+import { renderCollectionView } from './collectionView.js';
 
-// Module-level state
-let fullInventory = [];
+// Module-level state for deck building
+let fullInventory = []; // Keep a copy for finding card details
 let decks = [];
-let filteredInventory = [];
-
 let activeDeckIndex = -1;
 let isEditing = false;
-let editingDeck = []; // A temporary copy of the deck being edited
+let editingDeck = [];
 
 /**
- * Main function to render the entire inventory and deck building view.
+ * Central UI update function. Renders the available cards in the collection
+ * and the current state of the deck being edited, ensuring they are always in sync.
+ */
+function refreshEditView() {
+    if (!isEditing) return;
+
+    // Create a Set of card IDs currently in the deck for efficient lookup.
+    const editingDeckCardIds = new Set(editingDeck.filter(id => id));
+
+    // Filter the main inventory to get only cards that are NOT in the deck.
+    const availableInventory = fullInventory.filter(card => !editingDeckCardIds.has(card.id));
+
+    // Re-render the collection view with the filtered list of available cards.
+    renderCollectionView(document.getElementById('collection-view-wrapper'), availableInventory, {
+        title: 'My Collection',
+        cardOptions: { isDraggable: true }
+    });
+
+    // Re-attach event listeners to the newly rendered collection cards.
+    attachDragListenersToInventory();
+    attachRightClickListenersToInventory();
+
+    // Re-render the deck hotbar to show the latest changes.
+    renderDeckHotbar();
+}
+
+/**
+ * Main function to render the inventory and deck building view.
  * @param {HTMLElement} container The element to render the view into.
  */
 export async function renderInventoryView(container) {
@@ -22,87 +48,83 @@ export async function renderInventoryView(container) {
                 <div id="deck-controls" class="deck-controls"></div>
                 <div id="deck-hotbar" class="deck-hotbar"></div>
             </div>
-            <div class="inventory-section">
-                <div class="inventory-header">
-                    <h1>My Collection</h1>
-                    <input type="search" id="inventory-search" class="form-input" placeholder="Search for cards..." />
-                </div>
-                <div id="inventory-grid-container" class="card-grid">Loading your collection...</div>
+            <div id="collection-view-wrapper" class="inventory-section">
+                <!-- The Collection View will be rendered here -->
             </div>
         </div>
         <div id="card-context-menu" class="card-context-menu" style="display: none;"></div>
     `;
 
-    await fetchAndRenderCollection();
-
-    // Default to the first deck being selected on load.
-    if (decks.length > 0) {
-        activeDeckIndex = 0;
+    // FIX: Attach event listeners ONCE using event delegation on a stable parent.
+    // This prevents listeners from being duplicated or lost during re-renders.
+    const layout = container.querySelector('.inventory-layout');
+    if (layout) {
+        layout.addEventListener('click', (e) => {
+            if (e.target.id === 'edit-deck-btn') toggleEditMode();
+            if (e.target.id === 'save-deck-btn') handleSaveDeck();
+        });
+        layout.addEventListener('change', (e) => {
+            if (e.target.id === 'deck-select' && !isEditing) {
+                activeDeckIndex = parseInt(e.target.value, 10);
+                renderDeckHotbar();
+            }
+        });
     }
-    renderDeckControls();
-    renderDeckHotbar();
-    updateAndRenderInventory();
-    attachEventListeners();
+
+    // Attach context menu listeners once.
+    document.addEventListener('click', () => { document.getElementById('card-context-menu').style.display = 'none'; });
+    document.getElementById('card-context-menu').addEventListener('click', handleContextMenuAction);
+
+
+    await fetchAndDisplayData();
 }
 
 /**
- * Fetches inventory and deck data and populates the module-level state.
+ * Fetches data and renders all parts of the view.
  */
-async function fetchAndRenderCollection() {
-    const gridContainer = document.getElementById('inventory-grid-container');
+async function fetchAndDisplayData() {
+    const wrapper = document.getElementById('collection-view-wrapper');
+    wrapper.innerHTML = `<div class="loader">Loading your collection...</div>`;
+
     try {
-        // Use '@me' to fetch the collection for the currently authenticated user.
         const data = await loadCollectionData('@me');
         if (data.success) {
             fullInventory = data.inventory || [];
             decks = data.decks || [];
+
+            // Initial render of the collection view with all cards.
+            renderCollectionView(wrapper, fullInventory, {
+                title: 'My Collection',
+                cardOptions: { isDraggable: false } // Dragging is disabled by default.
+            });
+
+            // FIX: Only set the active deck index if it hasn't been set yet.
+            // This preserves the user's selection after a save and refresh.
+            if (activeDeckIndex === -1 && decks.length > 0) {
+                activeDeckIndex = 0;
+            }
+            renderDeckControls();
+            renderDeckHotbar();
+
         } else {
-            gridContainer.innerHTML = `<div class="message-box message-error">${data.message}</div>`;
+            wrapper.innerHTML = `<div class="message-box message-error">${data.message}</div>`;
         }
     } catch (error) {
-        gridContainer.innerHTML = `<div class="message-box message-error">${error.message}</div>`;
+        wrapper.innerHTML = `<div class="message-box message-error">${error.message}</div>`;
     }
 }
 
-/**
- * Applies search and deck filters to the inventory and re-renders the grid.
- */
-function updateAndRenderInventory() {
-    const searchTerm = document.getElementById('inventory-search')?.value.toLowerCase() || '';
-
-    let tempFiltered = fullInventory.filter(card =>
-        card.name.toLowerCase().includes(searchTerm) ||
-        card.number.toString().includes(searchTerm)
-    );
-
-    if (isEditing && activeDeckIndex > -1) {
-        const deckCardIds = new Set(editingDeck.filter(id => id));
-        tempFiltered = tempFiltered.filter(card => !deckCardIds.has(card.id));
-    }
-
-    filteredInventory = tempFiltered;
-    renderInventoryGrid();
-}
-
-/**
- * Renders the deck selection dropdown and action buttons.
- */
 function renderDeckControls() {
     const controlsContainer = document.getElementById('deck-controls');
     if (!controlsContainer) return;
     const deckOptions = decks.map((_, index) => `<option value="${index}" ${index === activeDeckIndex ? 'selected' : ''}>Deck ${index + 1}</option>`).join('');
     controlsContainer.innerHTML = `
-        <select id="deck-select" class="form-input">
-            ${deckOptions}
-        </select>
-        <button id="edit-deck-btn" class="btn">${isEditing ? 'Cancel Edit' : 'Edit Deck'}</button>
+        <select id="deck-select" class="form-input">${deckOptions}</select>
+        <button id="edit-deck-btn" class="btn">${isEditing ? 'Cancel' : 'Edit Deck'}</button>
         <button id="save-deck-btn" class="btn btn-primary" style="display: none;">Save Deck</button>
     `;
 }
 
-/**
- * Renders the 10 slots for the currently active deck.
- */
 function renderDeckHotbar() {
     const hotbarContainer = document.getElementById('deck-hotbar');
     if (!hotbarContainer) return;
@@ -112,7 +134,7 @@ function renderDeckHotbar() {
 
     for (let i = 0; i < 10; i++) {
         const cardObjectId = currentDeck[i];
-        const card = cardObjectId ? findCardInInventory(cardObjectId) : null;
+        const card = cardObjectId ? fullInventory.find(c => c.id === cardObjectId) : null;
         const slot = document.createElement('div');
         slot.className = 'deck-slot';
         slot.dataset.slotIndex = i;
@@ -129,77 +151,42 @@ function renderDeckHotbar() {
     hotbarContainer.classList.toggle('editing', isEditing);
 
     if (isEditing) {
-        attachRightClickListenersToHotbar();
         attachDragListenersToHotbar();
+        attachRightClickListenersToHotbar();
     }
 }
-
-/**
- * Renders the grid of cards based on the currently filtered inventory.
- */
-function renderInventoryGrid() {
-    const gridContainer = document.getElementById('inventory-grid-container');
-    if (!gridContainer) return;
-
-    if (filteredInventory.length > 0) {
-        gridContainer.innerHTML = filteredInventory.map(card => `
-            <div class="inventory-card" draggable="${isEditing}" data-card-id="${card.id}">
-                <img src="${card.image}" alt="${card.name}" class="card-image" />
-                <h3>${card.name}</h3>
-                <p># ${card.number}</p>
-            </div>
-        `).join('');
-    } else if (fullInventory.length === 0) {
-        gridContainer.innerHTML = `<p>Your inventory is empty. Open a pack in the store to get started!</p>`;
-    } else {
-        gridContainer.innerHTML = `<p>No available cards match your search.</p>`;
-    }
-
-    if (isEditing) {
-        attachDragListenersToInventory();
-        attachRightClickListenersToInventory();
-    }
-}
-
-/**
- * Attaches all necessary event listeners for the view.
- */
-function attachEventListeners() {
-    document.getElementById('inventory-search')?.addEventListener('input', updateAndRenderInventory);
-    const controlsContainer = document.getElementById('deck-controls');
-    controlsContainer?.addEventListener('click', handleDeckControlClicks);
-    controlsContainer?.addEventListener('change', handleDeckSelectionChange);
-    document.addEventListener('click', () => { document.getElementById('card-context-menu').style.display = 'none'; });
-    document.getElementById('card-context-menu').addEventListener('click', handleContextMenuAction);
-}
-
-function handleDeckControlClicks(e) { if (e.target.id === 'edit-deck-btn') toggleEditMode(); if (e.target.id === 'save-deck-btn') handleSaveDeck(); }
-function handleDeckSelectionChange(e) { if (e.target.id === 'deck-select') { if (isEditing) toggleEditMode(); activeDeckIndex = parseInt(e.target.value, 10); renderDeckHotbar(); } }
 
 function toggleEditMode() {
     isEditing = !isEditing;
-    if (isEditing && activeDeckIndex > -1) {
-        editingDeck = [...(decks[activeDeckIndex] || [])];
+
+    if (isEditing) {
+        // Entering edit mode: copy the current deck and refresh the view.
+        editingDeck = activeDeckIndex > -1 ? [...(decks[activeDeckIndex] || [])] : [];
+        refreshEditView();
     } else {
+        // Exiting edit mode: clear the temporary deck and restore the full collection view.
         editingDeck = [];
+        renderCollectionView(document.getElementById('collection-view-wrapper'), fullInventory, {
+            title: 'My Collection',
+            cardOptions: { isDraggable: false }
+        });
+        renderDeckHotbar();
     }
+
+    // Update UI controls state.
     document.getElementById('save-deck-btn').style.display = isEditing ? 'flex' : 'none';
     document.getElementById('deck-select').disabled = isEditing;
-    document.getElementById('edit-deck-btn').textContent = isEditing ? 'Cancel Edit' : 'Edit Deck';
-    renderDeckHotbar();
-    updateAndRenderInventory();
+    document.getElementById('edit-deck-btn').textContent = isEditing ? 'Cancel' : 'Edit Deck';
 }
 
 async function handleSaveDeck() {
-    const cardIdsInDeck = editingDeck.filter(id => id);
     try {
-        const data = await saveActiveDeck(activeDeckIndex, cardIdsInDeck);
+        // Filter out any empty slots before saving.
+        const data = await saveActiveDeck(activeDeckIndex, editingDeck.filter(id => id));
         if (data.success) {
-            toggleEditMode();
-            await fetchAndRenderCollection();
-            renderDeckControls();
-            renderDeckHotbar();
-            showNotification('Deck saved successfully!');
+            showNotification('Deck saved!');
+            isEditing = false; // Manually exit edit mode before refetching data.
+            await fetchAndDisplayData();
         } else {
             showNotification(data.message, true);
         }
@@ -208,27 +195,61 @@ async function handleSaveDeck() {
     }
 }
 
-function attachDragListenersToInventory() { document.querySelectorAll('.inventory-card[draggable="true"]').forEach(card => { card.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', e.currentTarget.dataset.cardId); e.dataTransfer.effectAllowed = 'copy'; }); }); }
-function attachDragListenersToHotbar() { document.querySelectorAll('.deck-slot').forEach(slot => { slot.addEventListener('dragover', e => e.preventDefault()); slot.addEventListener('drop', handleCardDrop); }); }
+// --- DRAG & DROP AND CONTEXT MENU LOGIC ---
+
+function attachDragListenersToInventory() {
+    document.querySelectorAll('.card-component[draggable="true"]').forEach(card => {
+        card.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', e.currentTarget.dataset.cardId);
+            e.dataTransfer.effectAllowed = 'copy';
+        });
+    });
+}
+
+function attachDragListenersToHotbar() {
+    document.querySelectorAll('.deck-slot').forEach(slot => {
+        slot.addEventListener('dragover', e => e.preventDefault());
+        slot.addEventListener('drop', handleCardDrop);
+    });
+}
 
 function handleCardDrop(e) {
     e.preventDefault();
     const cardId = e.dataTransfer.getData('text/plain');
-    const targetSlot = e.currentTarget;
-    const slotIndex = parseInt(targetSlot.dataset.slotIndex, 10);
-    const currentCardCount = editingDeck.filter(id => id).length;
+    const slotIndex = parseInt(e.currentTarget.dataset.slotIndex, 10);
 
-    if (currentCardCount >= 10 && !editingDeck[slotIndex]) {
-        showNotification('Deck is full! Cannot add more than 10 cards.', true);
+    if (editingDeck.includes(cardId)) {
+        showNotification('Card is already in the deck!', true);
         return;
     }
+    if (editingDeck.filter(id => id).length >= 10 && !editingDeck[slotIndex]) {
+        showNotification('Deck is full!', true);
+        return;
+    }
+
     editingDeck[slotIndex] = cardId;
-    renderDeckHotbar();
-    updateAndRenderInventory();
+    refreshEditView(); // Update the entire view.
 }
 
-function attachRightClickListenersToInventory() { document.querySelectorAll('.inventory-card[draggable="true"]').forEach(card => { card.addEventListener('contextmenu', e => { e.preventDefault(); showContextMenu(e, 'inventory', { cardId: e.currentTarget.dataset.cardId }); }); }); }
-function attachRightClickListenersToHotbar() { document.querySelectorAll('.deck-slot').forEach(slot => { slot.addEventListener('contextmenu', e => { e.preventDefault(); if (slot.dataset.cardId) { showContextMenu(e, 'deck', { cardId: slot.dataset.cardId, slotIndex: slot.dataset.slotIndex }); } }); }); }
+function attachRightClickListenersToInventory() {
+    document.querySelectorAll('.card-component[draggable="true"]').forEach(card => {
+        card.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            showContextMenu(e, 'inventory', { cardId: e.currentTarget.dataset.cardId });
+        });
+    });
+}
+
+function attachRightClickListenersToHotbar() {
+    document.querySelectorAll('.deck-slot').forEach(slot => {
+        if (slot.dataset.cardId) {
+            slot.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                showContextMenu(e, 'deck', { slotIndex: slot.dataset.slotIndex });
+            });
+        }
+    });
+}
 
 function showContextMenu(e, type, data) {
     const menu = document.getElementById('card-context-menu');
@@ -242,27 +263,24 @@ function showContextMenu(e, type, data) {
 
 function handleContextMenuAction(e) {
     const { action, cardId, slotIndex } = e.target.dataset;
-    if (!action) return;
 
     if (action === 'add') {
-        const currentCardCount = editingDeck.filter(id => id).length;
-        if (currentCardCount >= 10) {
-            showNotification('Deck is full! Cannot add more than 10 cards.', true);
+        if (editingDeck.includes(cardId)) {
+            showNotification('Card is already in the deck!', true);
+            return;
+        }
+        if (editingDeck.filter(id => id).length >= 10) {
+            showNotification('Deck is full!', true);
             return;
         }
         const firstEmptySlot = editingDeck.findIndex(id => !id);
-        if (firstEmptySlot !== -1) {
-            editingDeck[firstEmptySlot] = cardId;
-        } else {
-            editingDeck.push(cardId) // Fallback if deck is not full but has no empty slots (sparse)
-        }
+        editingDeck[firstEmptySlot !== -1 ? firstEmptySlot : editingDeck.length] = cardId;
     } else if (action === 'remove') {
+        // Using 'delete' creates a sparse array, which is intended here to keep slot positions stable.
         delete editingDeck[parseInt(slotIndex, 10)];
     }
 
-    renderDeckHotbar();
-    updateAndRenderInventory();
+    refreshEditView(); // Update the entire view.
     document.getElementById('card-context-menu').style.display = 'none';
 }
 
-function findCardInInventory(cardId) { return fullInventory.find(c => c.id === cardId); }

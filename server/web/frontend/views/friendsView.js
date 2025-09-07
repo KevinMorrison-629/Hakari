@@ -1,6 +1,7 @@
 import { getFriendsData, searchUsers, sendFriendRequest, respondToRequest, removeFriend } from '../api/friendsApi.js';
 import { loadCollectionData } from '../api/collectionApi.js';
 import { showNotification } from '../ui/notification.js';
+import { renderCollectionView } from '../views/collectionView.js';
 
 let allFriends = []; // Cache the full friends list for filtering
 
@@ -54,7 +55,6 @@ function renderPendingRequestItem(request) {
     `;
 }
 
-
 // --- MAIN RENDER FUNCTION ---
 
 export async function renderFriendsView(container) {
@@ -86,189 +86,116 @@ export async function renderFriendsView(container) {
     attachFriendsEventListeners();
 }
 
-// --- DATA HANDLING AND RENDERING ---
+// --- DATA HANDLING & RENDERING ---
 
 async function loadAndRenderAllData() {
     try {
         const data = await getFriendsData();
         if (!data.success) throw new Error(data.message || 'Failed to load friends data.');
-
         allFriends = data.friends || [];
-
-        const friendsListEl = document.getElementById('friends-list');
         document.getElementById('friends-count').textContent = allFriends.length;
-        friendsListEl.innerHTML = allFriends.length > 0
+        document.getElementById('friends-list').innerHTML = allFriends.length > 0
             ? allFriends.map(renderFriendListItem).join('')
-            : '<li class="list-placeholder">You have no friends yet. Use the search above to add some!</li>';
-
-        const pendingListEl = document.getElementById('pending-requests-list');
+            : '<li class="list-placeholder">You have no friends yet.</li>';
         const incoming = (data.incomingRequests || []).map(u => ({ ...u, type: 'incoming' }));
         const outgoing = (data.outgoingRequests || []).map(u => ({ ...u, type: 'outgoing' }));
         const allRequests = [...incoming, ...outgoing];
-
-        pendingListEl.innerHTML = allRequests.length > 0
+        document.getElementById('pending-requests-list').innerHTML = allRequests.length > 0
             ? allRequests.map(renderPendingRequestItem).join('')
             : '<li class="list-placeholder">No pending requests.</li>';
-
     } catch (error) {
-        console.error('Error loading friends data:', error);
         showNotification(error.message, true);
     }
 }
 
 function filterFriends() {
     const query = document.getElementById('friend-filter-input').value.toLowerCase();
-    const friendsListEl = document.getElementById('friends-list');
     const filteredFriends = allFriends.filter(friend => friend.displayName.toLowerCase().includes(query));
-    friendsListEl.innerHTML = filteredFriends.length > 0
+    document.getElementById('friends-list').innerHTML = filteredFriends.length > 0
         ? filteredFriends.map(renderFriendListItem).join('')
         : '<li class="list-placeholder">No friends found matching your filter.</li>';
 }
 
-
-// --- EVENT LISTENERS ---
+// --- EVENT LISTENERS & HANDLERS ---
 
 function attachFriendsEventListeners() {
     const container = document.getElementById('main-content');
-    const userSearchBtn = document.getElementById('user-search-btn');
-    const userSearchInput = document.getElementById('user-search-input');
-    userSearchBtn.addEventListener('click', handleUserSearch);
-    userSearchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleUserSearch());
-    document.getElementById('friend-filter-input').addEventListener('input', filterFriends);
+    document.getElementById('user-search-btn')?.addEventListener('click', handleUserSearch);
+    document.getElementById('user-search-input')?.addEventListener('keyup', (e) => e.key === 'Enter' && handleUserSearch());
+    document.getElementById('friend-filter-input')?.addEventListener('input', filterFriends);
 
     container.addEventListener('click', async (e) => {
         const target = e.target.closest('button');
         if (!target) return;
 
+        const { id, action } = target.dataset;
+
         if (target.matches('.send-request-btn')) {
             target.disabled = true;
             target.textContent = 'Sending...';
-            try {
-                const data = await sendFriendRequest(target.dataset.id);
-                if (!data.success) throw new Error(data.message);
-                target.textContent = 'Sent!';
-            } catch (error) {
-                showNotification(error.message, true);
+            const data = await sendFriendRequest(id);
+            if (data.success) target.textContent = 'Sent!';
+            else {
+                showNotification(data.message, true);
                 target.disabled = false;
                 target.textContent = 'Send Request';
             }
-        }
-
-        if (target.matches('.respond-request-btn')) {
-            const userId = target.dataset.id;
-            const action = target.dataset.action;
+        } else if (target.matches('.respond-request-btn')) {
             target.closest('.user-actions').querySelectorAll('button').forEach(btn => btn.disabled = true);
-            await respondToRequest(userId, action);
+            await respondToRequest(id, action);
             await loadAndRenderAllData();
-        }
-
-        if (target.matches('.remove-friend-btn')) {
-            if (!confirm('Are you sure you want to remove this friend?')) return;
-            target.disabled = true;
-            target.textContent = '✖';
-            await removeFriend(target.dataset.id);
-            await loadAndRenderAllData();
-        }
-
-        const friendAction = target.dataset.action;
-        if (friendAction === 'inventory') {
-            const userId = target.dataset.id;
+        } else if (target.matches('.remove-friend-btn')) {
+            if (confirm('Are you sure you want to remove this friend?')) {
+                await removeFriend(id);
+                await loadAndRenderAllData();
+            }
+        } else if (action === 'inventory') {
             const displayName = target.closest('.user-list-item').querySelector('.user-display-name').textContent;
-            handleViewInventory(userId, displayName);
-        } else if (['message', 'trade', 'battle'].includes(friendAction)) {
-            showNotification(`'${friendAction}' button clicked. (Not implemented)`);
+            handleViewInventory(id, displayName);
+        } else if (['message', 'trade', 'battle'].includes(action)) {
+            showNotification(`'${action}' button clicked. (Not implemented)`);
         }
     });
 }
 
 async function handleUserSearch() {
     const searchInput = document.getElementById('user-search-input');
-    const searchBtn = document.getElementById('user-search-btn');
     const resultsContainer = document.getElementById('user-search-results-container');
     const query = searchInput.value.trim();
-
     if (query.length < 3) {
-        resultsContainer.innerHTML = `<p class="search-message">Please enter at least 3 characters.</p>`;
+        resultsContainer.innerHTML = `<p class="search-message">Enter at least 3 characters.</p>`;
         return;
     }
-
-    searchBtn.disabled = true;
-    searchBtn.innerHTML = `<span class="animate-spin">🔍</span>`;
     resultsContainer.innerHTML = `<p class="search-message">Searching...</p>`;
-
     try {
         const data = await searchUsers(query);
-        if (data.success) {
-            resultsContainer.innerHTML = data.users.length > 0
-                ? `<ul class="user-list">${data.users.map(renderSearchResultItem).join('')}</ul>`
-                : `<p class="search-message">No users found.</p>`;
-        } else {
-            resultsContainer.innerHTML = `<p class="search-message message-error">${data.message}</p>`;
-        }
+        resultsContainer.innerHTML = data.success && data.users.length > 0
+            ? `<ul class="user-list">${data.users.map(renderSearchResultItem).join('')}</ul>`
+            : `<p class="search-message">${data.success ? 'No users found.' : data.message}</p>`;
     } catch (error) {
         resultsContainer.innerHTML = `<p class="search-message message-error">${error.message}</p>`;
-    } finally {
-        searchBtn.disabled = false;
-        searchBtn.textContent = 'Search';
     }
 }
 
-// --- FRIEND COLLECTION VIEW ---
-
-/**
- * Renders a view of a friend's card collection.
- * @param {object} user - The user object ({ _id, displayName }).
- * @param {Array} inventory - The user's inventory of card objects.
- */
-function renderFriendCollectionView(user, inventory) {
-    const container = document.getElementById('main-content');
-    container.innerHTML = `
-        <div class="friends-collection-view">
-            <div class="view-header" style="display: flex; align-items: center; margin-bottom: 1rem; gap: 1rem;">
-                <button id="back-to-friends-btn" class="btn">&larr; Back to Friends</button>
-                <h1>${user.displayName}'s Collection</h1>
-            </div>
-            <div id="friend-inventory-grid" class="card-grid"></div>
-        </div>
-    `;
-
-    const gridContainer = document.getElementById('friend-inventory-grid');
-    if (inventory && inventory.length > 0) {
-        gridContainer.innerHTML = inventory.map(card => `
-            <div class="inventory-card" data-card-id="${card.id}">
-                <img src="${card.image}" alt="${card.name}" class="card-image" />
-                <h3>${card.name}</h3>
-                <p># ${card.number}</p>
-            </div>
-        `).join('');
-    } else {
-        gridContainer.innerHTML = `<p class="list-placeholder">${user.displayName} has no cards in their collection yet.</p>`;
-    }
-
-    document.getElementById('back-to-friends-btn').addEventListener('click', () => {
-        renderFriendsView(container);
-    });
-}
-
-/**
- * Handles the logic for fetching and displaying a friend's inventory.
- * @param {string} userId - The ID of the friend.
- * @param {string} displayName - The display name of the friend.
- */
 async function handleViewInventory(userId, displayName) {
     const container = document.getElementById('main-content');
     container.innerHTML = `<div class="loader">Loading ${displayName}'s collection...</div>`;
     try {
         const data = await loadCollectionData(userId);
         if (data.success) {
-            renderFriendCollectionView({ _id: userId, displayName }, data.inventory);
+            const backButtonHTML = `<button id="back-to-friends-btn" class="btn">&larr; Back to Friends</button>`;
+            renderCollectionView(container, data.inventory, {
+                title: `${displayName}'s Collection`,
+                headerHTML: backButtonHTML
+            });
+            document.getElementById('back-to-friends-btn').addEventListener('click', () => {
+                renderFriendsView(container);
+            });
         } else {
             throw new Error(data.message);
         }
     } catch (error) {
         showNotification(`Error loading collection: ${error.message}`, true);
-        // On error, render the main friends view again so the user isn't stuck.
         renderFriendsView(container);
     }
 }
-

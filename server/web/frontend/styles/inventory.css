@@ -1,44 +1,12 @@
-/* --- Card Grid for Inventory --- */
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-}
+/*======================================
+  INVENTORY VIEW SPECIFIC STYLES
+======================================*/
 
-.inventory-card {
-    background-color: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.inventory-card h3 {
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 0;
-}
-
-.inventory-card p {
-    font-family: monospace;
-    color: #818cf8;
-    /* text-indigo-400 */
-    font-size: 0.875rem;
-    margin: 0.5rem 0 0 0;
-}
-
-.card-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-}
-
-/* --- Inventory & Deck Builder --- */
+/* --- Main Layout: Deck Builder + Collection --- */
 .inventory-layout {
     display: flex;
     gap: 2rem;
+    /* Height is calculated based on viewport height minus the navbar height */
     height: calc(100vh - 4rem);
 }
 
@@ -49,6 +17,15 @@
     flex-direction: column;
 }
 
+.inventory-section {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* This is key for the child collection view to scroll properly */
+}
+
+/* --- Deck Builder Controls & Hotbar --- */
 .deck-controls {
     display: flex;
     gap: 0.5rem;
@@ -76,6 +53,7 @@
     border-radius: 0.5rem;
     padding: 0.5rem;
     min-height: 150px;
+    /* Give it a minimum height */
 }
 
 .deck-slot {
@@ -89,7 +67,7 @@
     font-weight: bold;
     color: #6b7280;
     overflow: hidden;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
 }
 
 .deck-hotbar.editing .deck-slot {
@@ -97,40 +75,21 @@
     cursor: copy;
 }
 
+.deck-hotbar.editing .deck-slot:hover {
+    background-color: #4338ca;
+    border-color: #818cf8;
+}
+
 .deck-slot img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none;
+    /* Make sure the slot receives the drop event */
 }
 
-.inventory-section {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
 
-.inventory-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-shrink: 0;
-}
-
-.inventory-header #inventory-search {
-    max-width: 300px;
-}
-
-#inventory-grid-container {
-    overflow-y: auto;
-    padding-right: 1rem;
-}
-
-.inventory-card[draggable="true"] {
-    cursor: grab;
-}
-
+/* --- Context Menu for Deck Building --- */
 .card-context-menu {
     position: fixed;
     z-index: 1000;

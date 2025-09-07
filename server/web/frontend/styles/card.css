@@ -1,0 +1,66 @@
+/*======================================
+  CARD COMPONENT STYLES
+======================================*/
+
+.card-component {
+    background-color: #1f2937;
+    /* bg-gray-800 */
+    border: 1px solid #374151;
+    /* border-gray-700 */
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-component:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+.card-component .card-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2.5 / 3.5;
+    /* This is the key fix for images: it scales the image to fill the container, cropping if necessary to maintain aspect ratio without distortion. */
+    object-fit: cover;
+    border-radius: 4px;
+    background-color: #374151;
+    /* Fallback color for broken images */
+}
+
+/* A wrapper for the text content for better control */
+.card-component .card-info {
+    padding-top: 0.75rem;
+}
+
+.card-component h3 {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+    color: #f9fafb;
+
+    /* This is the key fix for text: it prevents long names from wrapping and changing the card height. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-component p {
+    font-family: monospace;
+    color: #818cf8;
+    /* text-indigo-400 */
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+
+.card-component[draggable="true"] {
+    cursor: grab;
+}
+
+.card-component[draggable="true"]:active {
+    cursor: grabbing;
+}
