@@ -10,7 +10,7 @@ int main()
 {
     Server::Application app = Server::Application();
 
-    std::string botToken = Core::Utils::ReadFile("C:\\Users\\keblm\\Desktop\\Hakari\\bot_token.txt");
+    std::string botToken = Core::Utils::ReadFile("bot_token.txt");
 
     app.Initialize(9000, 8080, botToken);
     app.Start();
