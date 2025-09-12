@@ -157,7 +157,8 @@ namespace Core::Web
                                {
                                    res.status = 500;
                                    response_body["success"] = false;
-                                   response_body["message"] = "An internal server error occurred.";
+                                   response_body["message"] =
+                                       "An internal server error occurred. {" + std::string(e.what()) + "}";
                                }
                                res.set_content(response_body.dump(), "application/json");
                            });
@@ -191,7 +192,8 @@ namespace Core::Web
                                {
                                    res.status = 500;
                                    response_body["success"] = false;
-                                   response_body["message"] = "An internal server error occurred.";
+                                   response_body["message"] =
+                                       "An internal server error occurred. {" + std::string(e.what()) + "}";
                                }
                                res.set_content(response_body.dump(), "application/json");
                            });
