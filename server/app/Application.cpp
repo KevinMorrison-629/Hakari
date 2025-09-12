@@ -1,9 +1,13 @@
 #include "server/app/Application.h"
 
+#include "common/core/FileReader.h"
 #include "common/data/Dataclasses.h"
 #include "common/net/protocol.h"
 
+#include <iostream>
 #include <sodium.h>
+#include <string>
+#include <vector>
 
 namespace Server
 {
@@ -16,8 +20,40 @@ namespace Server
             throw std::runtime_error("Failed to initialize libsodium!");
         }
 
-        // Connect to Database
-        m_Database = std::make_shared<QDB::Database>("mongodb://localhost:27017/?maxPoolSize=50");
+        // --- Connect to Database ---
+        // Read connection details from a configuration file.
+        try
+        {
+            // Assumes a file named "mongo.conf" is in the same directory as the executable.
+            std::vector<std::string> config_lines = Core::Utils::ReadFileLines("mongo.conf");
+
+            // We expect at least 2 lines: username and password.
+            if (config_lines.size() >= 2)
+            {
+                std::string user = config_lines[0];
+                std::string pass = config_lines[1];
+
+                // Optional parameters with defaults
+                std::string host = (config_lines.size() > 2) ? config_lines[2] : "localhost";
+                std::uint16_t port = (config_lines.size() > 3) ? std::stoi(config_lines[3]) : 27017;
+                std::string auth_db = (config_lines.size() > 4) ? config_lines[4] : "admin";
+
+                std::cout << "Read config from mongo.conf. Attempting to connect to MongoDB with authentication..."
+                          << std::endl;
+                m_Database = std::make_shared<QDB::Database>(user, pass, host, port, auth_db);
+            }
+            else
+            {
+                throw std::runtime_error("mongo.conf is incomplete. Requires at least username and password.");
+            }
+        }
+        catch (const std::exception &e)
+        {
+            // If the file can't be read or is invalid, log a warning and fall back to an unauthenticated connection.
+            std::cerr << "WARNING: Could not load database config from mongo.conf. Reason: " << e.what() << std::endl;
+            std::cerr << "Attempting to connect to MongoDB without authentication..." << std::endl;
+            m_Database = std::make_shared<QDB::Database>("mongodb://localhost:27017/?maxPoolSize=50");
+        }
 
         // Create a single, shared DataService instance that all other services will use.
         auto dataService = std::make_shared<Core::Data::DataService>(m_Database);
