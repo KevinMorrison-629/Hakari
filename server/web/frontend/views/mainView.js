@@ -2,6 +2,7 @@ import { logout } from '../auth.js';
 import { apiFetch } from '../api/api.js';
 import { renderInventoryView } from './inventoryView.js';
 import { renderFriendsView } from './friendsView.js';
+import { renderStoreView } from './storeView.js';
 
 let activeTab = 'Store';
 
@@ -56,7 +57,7 @@ function renderContent() {
 
     switch (activeTab) {
         case 'Store':
-            renderStoreContent(contentContainer);
+            renderStoreView(contentContainer);
             break;
         case 'Inventory':
             renderInventoryView(contentContainer);
@@ -94,51 +95,4 @@ function renderPlaceholderContent(container, title) {
         <h1>${title}</h1>
         <p class="page-description">This section is under construction. Check back soon!</p>
     `;
-}
-
-async function renderStoreContent(container) {
-    container.innerHTML = `
-        <h1>Store</h1>
-        <p class="page-description">Purchase and open card packs to build your collection.</p>
-        <div class="card" style="max-width: 24rem;">
-            <h2>Standard Pack</h2>
-            <p style="color: #9ca3af; margin-top: 0.25rem;">Contains 5 random cards.</p>
-            <button id="open-pack-btn" class="btn btn-primary" style="margin-top: 1rem;">Open Pack</button>
-        </div>
-        <div id="store-message-container" style="margin-top: 1.5rem; max-width: 24rem;"></div>
-    `;
-
-    document.getElementById('open-pack-btn').addEventListener('click', async (e) => {
-        const btn = e.currentTarget;
-        const messageContainer = document.getElementById('store-message-container');
-
-        btn.disabled = true;
-        btn.innerHTML = `<span class="animate-spin">🎲</span> Opening...`;
-        messageContainer.innerHTML = '';
-
-        try {
-            const res = await apiFetch('/api/open_pack', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                messageContainer.innerHTML = `
-                    <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">${data.message}</h3>
-                    <div class="card">
-                        ${data.cards.map(card => `
-                            <div class="inventory-card">
-                                <img src="${card.image}" alt="${card.name}" class="card-image" />
-                                <h3>${card.name}</h3>
-                                <p># ${card.number}</p>
-                            </div>
-                        `).join('')}
-                    </div>`;
-            } else {
-                messageContainer.innerHTML = `<div class="message-box message-error">${data.message || 'Failed to open pack.'}</div>`;
-            }
-        } catch (error) {
-            messageContainer.innerHTML = `<div class="message-box message-error">An error occurred while communicating with the server.</div>`;
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Open Pack';
-        }
-    });
 }
