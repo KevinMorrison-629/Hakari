@@ -550,7 +550,7 @@ namespace Core::Web
                         }
 
                         // --- Always fetch inventory ---
-                        auto user_cards_query = QDB::Query().in("_id", player_opt->inventory);
+                        auto user_cards_query = QDB::Query().in("_id", player_opt->cards);
                         std::vector<Core::Data::CardObject> user_card_objects =
                             m_dataService->card_objects.find(user_cards_query);
 
@@ -567,6 +567,22 @@ namespace Core::Web
                                 card_info["number"] = card_obj.number;
                                 card_info["image"] = "https://hotpink-octopus-624350.hostingersite.com/character/" +
                                                      card_ref_opt->characterId.to_string();
+                                card_info["attackPoints"] = card_obj.attackPoints;
+                                card_info["healthPoints"] = card_obj.healthPoints;
+                                card_info["tier"] = Core::Data::CardTier_to_String(card_ref_opt->tier);
+
+                                std::string ability_text = "";
+                                if (card_ref_opt && card_ref_opt->abilityId.size() > 0)
+                                {
+                                    auto ability_ref_opt = m_dataService->ability_references.find_one(
+                                        QDB::Query().eq("_id", card_ref_opt->abilityId));
+                                    if (ability_ref_opt)
+                                    {
+                                        ability_text = ability_ref_opt->name;
+                                    }
+                                }
+                                card_info["ability"] = ability_text;
+
                                 inventory_array.push_back(card_info);
                             }
                         }

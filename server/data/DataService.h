@@ -19,6 +19,7 @@ namespace Core::Data
         QDB::Collection<Player> players;
         QDB::Collection<CardReference> card_references;
         QDB::Collection<CardObject> card_objects;
+        QDB::Collection<AbilityReference> ability_references;
 
         /**
          * @brief Constructs the service and initializes all collection handles.
@@ -27,7 +28,8 @@ namespace Core::Data
         DataService(std::shared_ptr<QDB::Database> db)
             : players(db->get_collection<Player>("hakari", "players")),
               card_references(db->get_collection<CardReference>("hakari", "card_references")),
-              card_objects(db->get_collection<CardObject>("hakari", "card_objects"))
+              card_objects(db->get_collection<CardObject>("hakari", "card_objects")),
+              ability_references(db->get_collection<AbilityReference>("hakari", "card-abilities"))
         {
         }
 

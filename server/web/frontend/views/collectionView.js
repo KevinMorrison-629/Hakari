@@ -1,10 +1,11 @@
-import { renderCard } from '../ui/card.js';
+import CardUI from '../ui/card.js';
 
 // --- MODULE-LEVEL STATE ---
 let fullInventory = [];
 let sortState = { key: 'name', direction: 'asc' };
 let searchTerm = '';
 let cardOptions = {};
+const tierOrder = { 'champion': 1, 'exalted': 2, 'celestial': 3, 'divine': 4, 'ascendant': 5, 'genesis': 6, 'voidborn': 7, 'omega': 8 };
 
 // --- PRIVATE FUNCTIONS ---
 
@@ -15,13 +16,20 @@ let cardOptions = {};
 function renderCardGrid(inventory) {
     const gridContainer = document.getElementById('collection-grid-container');
     if (!gridContainer) return;
+    gridContainer.innerHTML = ''; // Clear previous cards
 
     if (inventory && inventory.length > 0) {
-        gridContainer.innerHTML = inventory.map(card => renderCard(card, cardOptions)).join('');
+        inventory.forEach(cardData => {
+            const card = new CardUI(gridContainer, cardData);
+            if (cardOptions.isDraggable) {
+                card.setDraggable(true);
+            }
+        });
     } else {
         gridContainer.innerHTML = `<p class="list-placeholder">No cards match the current filters.</p>`;
     }
 }
+
 
 /**
  * Applies search and sort filters to the full inventory and re-renders the grid.
@@ -33,7 +41,8 @@ function updateAndRender() {
     if (term) {
         processedInventory = processedInventory.filter(card =>
             card.name.toLowerCase().includes(term) ||
-            card.number.toString().includes(term)
+            card.acqNumber.toString().includes(term) ||
+            card.ability.toLowerCase().includes(term)
         );
     }
 
@@ -41,9 +50,16 @@ function updateAndRender() {
         const { key, direction } = sortState;
         const valA = a[key];
         const valB = b[key];
-        let comparison = (typeof valA === 'number' && typeof valB === 'number')
-            ? valA - valB
-            : valA.toString().localeCompare(valB.toString());
+        let comparison = 0;
+
+        if (key === 'tier') {
+            comparison = (tierOrder[valA] || 0) - (tierOrder[valB] || 0);
+        } else {
+            comparison = (typeof valA === 'number' && typeof valB === 'number')
+                ? valA - valB
+                : valA.toString().localeCompare(valB.toString());
+        }
+
         return direction === 'asc' ? comparison : -comparison;
     });
 
@@ -78,7 +94,10 @@ export function renderCollectionView(container, inventoryData, config) {
                     <input type="search" id="collection-search" class="form-input" placeholder="Search cards...">
                     <select id="collection-sort-key" class="form-input">
                         <option value="name">Sort by Name</option>
-                        <option value="number">Sort by Number</option>
+                        <option value="acqNumber">Sort by Number</option>
+                        <option value="ap">Sort by Attack</option>
+                        <option value="hp">Sort by Health</option>
+                        <option value="tier">Sort by Tier</option>
                     </select>
                     <button id="collection-sort-dir" class="btn">▲</button>
                 </div>
@@ -91,19 +110,29 @@ export function renderCollectionView(container, inventoryData, config) {
     updateAndRender();
 
     // 4. Attach event listeners
-    document.getElementById('collection-search').addEventListener('input', (e) => {
-        searchTerm = e.target.value;
-        updateAndRender();
-    });
+    const searchInput = document.getElementById('collection-search');
+    const sortKeySelect = document.getElementById('collection-sort-key');
+    const sortDirButton = document.getElementById('collection-sort-dir');
 
-    document.getElementById('collection-sort-key').addEventListener('change', (e) => {
-        sortState.key = e.target.value;
-        updateAndRender();
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            updateAndRender();
+        });
+    }
 
-    document.getElementById('collection-sort-dir').addEventListener('click', (e) => {
-        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-        e.currentTarget.innerHTML = sortState.direction === 'asc' ? '▲' : '▼';
-        updateAndRender();
-    });
+    if (sortKeySelect) {
+        sortKeySelect.addEventListener('change', (e) => {
+            sortState.key = e.target.value;
+            updateAndRender();
+        });
+    }
+
+    if (sortDirButton) {
+        sortDirButton.addEventListener('click', (e) => {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            e.currentTarget.innerHTML = sortState.direction === 'asc' ? '▲' : '▼';
+            updateAndRender();
+        });
+    }
 }

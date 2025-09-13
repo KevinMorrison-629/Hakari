@@ -3,11 +3,35 @@ import { showNotification } from '../ui/notification.js';
 import { renderCollectionView } from './collectionView.js';
 
 // Module-level state for deck building
-let fullInventory = []; // Keep a copy for finding card details
+let fullInventory = []; // Keep a copy with original backend data structure
 let decks = [];
 let activeDeckIndex = -1;
 let isEditing = false;
 let editingDeck = [];
+
+
+/**
+ * Maps card data from the backend schema to the schema expected by the CardUI component.
+ * @param {object} card The card data from the backend.
+ * @returns {object} The mapped card data for the UI.
+ */
+function mapCardDataForView(card) {
+    if (!card) return null;
+    return {
+        // Pass through fields needed by other parts like drag-and-drop
+        id: card.id,
+
+        // Map fields for CardUI component
+        name: card.name,
+        acqNumber: card.number,
+        imageUrl: card.image,
+        ap: card.attackPoints,
+        hp: card.healthPoints,
+        tier: card.tier,
+        ability: card.ability,
+    };
+}
+
 
 /**
  * Central UI update function. Renders the available cards in the collection
@@ -22,8 +46,11 @@ function refreshEditView() {
     // Filter the main inventory to get only cards that are NOT in the deck.
     const availableInventory = fullInventory.filter(card => !editingDeckCardIds.has(card.id));
 
+    // Map the data for the view before rendering
+    const mappedInventory = availableInventory.map(mapCardDataForView);
+
     // Re-render the collection view with the filtered list of available cards.
-    renderCollectionView(document.getElementById('collection-view-wrapper'), availableInventory, {
+    renderCollectionView(document.getElementById('collection-view-wrapper'), mappedInventory, {
         title: 'My Collection',
         cardOptions: { isDraggable: true }
     });
@@ -55,8 +82,7 @@ export async function renderInventoryView(container) {
         <div id="card-context-menu" class="card-context-menu" style="display: none;"></div>
     `;
 
-    // FIX: Attach event listeners ONCE using event delegation on a stable parent.
-    // This prevents listeners from being duplicated or lost during re-renders.
+    // Attach event listeners ONCE using event delegation on a stable parent.
     const layout = container.querySelector('.inventory-layout');
     if (layout) {
         layout.addEventListener('click', (e) => {
@@ -92,14 +118,15 @@ async function fetchAndDisplayData() {
             fullInventory = data.inventory || [];
             decks = data.decks || [];
 
+            // Map the inventory data to the format the CardUI component expects.
+            const mappedInventory = fullInventory.map(mapCardDataForView);
+
             // Initial render of the collection view with all cards.
-            renderCollectionView(wrapper, fullInventory, {
+            renderCollectionView(wrapper, mappedInventory, {
                 title: 'My Collection',
                 cardOptions: { isDraggable: false } // Dragging is disabled by default.
             });
 
-            // FIX: Only set the active deck index if it hasn't been set yet.
-            // This preserves the user's selection after a save and refresh.
             if (activeDeckIndex === -1 && decks.length > 0) {
                 activeDeckIndex = 0;
             }
@@ -134,6 +161,7 @@ function renderDeckHotbar() {
 
     for (let i = 0; i < 10; i++) {
         const cardObjectId = currentDeck[i];
+        // Find card from the original `fullInventory` to get original data structure
         const card = cardObjectId ? fullInventory.find(c => c.id === cardObjectId) : null;
         const slot = document.createElement('div');
         slot.className = 'deck-slot';
@@ -166,7 +194,8 @@ function toggleEditMode() {
     } else {
         // Exiting edit mode: clear the temporary deck and restore the full collection view.
         editingDeck = [];
-        renderCollectionView(document.getElementById('collection-view-wrapper'), fullInventory, {
+        const mappedInventory = fullInventory.map(mapCardDataForView);
+        renderCollectionView(document.getElementById('collection-view-wrapper'), mappedInventory, {
             title: 'My Collection',
             cardOptions: { isDraggable: false }
         });
@@ -283,4 +312,3 @@ function handleContextMenuAction(e) {
     refreshEditView(); // Update the entire view.
     document.getElementById('card-context-menu').style.display = 'none';
 }
-

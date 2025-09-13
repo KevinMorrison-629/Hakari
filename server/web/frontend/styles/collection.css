@@ -62,7 +62,7 @@
 .card-grid {
     display: grid;
     /* Responsive grid: min 180px width, max 1fr */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 1rem;
     /* This is the key fix: It packs rows to the start of the container, preventing them and their items from stretching vertically when there's extra space. */
     align-content: start;
