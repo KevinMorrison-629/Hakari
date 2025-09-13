@@ -1,7 +1,6 @@
 import { getFriendsData, searchUsers, sendFriendRequest, respondToRequest, removeFriend } from '../api/friendsApi.js';
-import { loadCollectionData } from '../api/collectionApi.js';
 import { showNotification } from '../ui/notification.js';
-import { renderCollectionView } from '../views/collectionView.js';
+import { renderInventoryView } from './inventoryView.js';
 
 let allFriends = []; // Cache the full friends list for filtering
 
@@ -145,13 +144,15 @@ function attachFriendsEventListeners() {
             await respondToRequest(id, action);
             await loadAndRenderAllData();
         } else if (target.matches('.remove-friend-btn')) {
-            if (confirm('Are you sure you want to remove this friend?')) {
-                await removeFriend(id);
-                await loadAndRenderAllData();
-            }
+            // NOTE: The native confirm() dialog can be unreliable in this environment.
+            // For now, removing friend directly. A custom modal would be a good future improvement.
+            await removeFriend(id);
+            await loadAndRenderAllData();
         } else if (action === 'inventory') {
-            const displayName = target.closest('.user-list-item').querySelector('.user-display-name').textContent;
-            handleViewInventory(id, displayName);
+            const userId = target.dataset.id;
+            const userName = target.closest('.user-list-item').querySelector('.user-display-name').textContent;
+            // This will navigate to the inventory view and show the selected friend's collection
+            renderInventoryView(container, { userId, userName });
         } else if (['message', 'trade', 'battle'].includes(action)) {
             showNotification(`'${action}' button clicked. (Not implemented)`);
         }
@@ -177,25 +178,3 @@ async function handleUserSearch() {
     }
 }
 
-async function handleViewInventory(userId, displayName) {
-    const container = document.getElementById('main-content');
-    container.innerHTML = `<div class="loader">Loading ${displayName}'s collection...</div>`;
-    try {
-        const data = await loadCollectionData(userId);
-        if (data.success) {
-            const backButtonHTML = `<button id="back-to-friends-btn" class="btn">&larr; Back to Friends</button>`;
-            renderCollectionView(container, data.inventory, {
-                title: `${displayName}'s Collection`,
-                headerHTML: backButtonHTML
-            });
-            document.getElementById('back-to-friends-btn').addEventListener('click', () => {
-                renderFriendsView(container);
-            });
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        showNotification(`Error loading collection: ${error.message}`, true);
-        renderFriendsView(container);
-    }
-}

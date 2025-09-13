@@ -1,27 +1,23 @@
+import { getFriendsData } from '../api/friendsApi.js';
 import { loadCollectionData, saveActiveDeck } from '../api/collectionApi.js';
 import { showNotification } from '../ui/notification.js';
 import { renderCollectionView } from './collectionView.js';
 
-// Module-level state for deck building
-let fullInventory = []; // Keep a copy with original backend data structure
-let decks = [];
+// --- MODULE-LEVEL STATE ---
+let fullInventory = []; // Inventory of the currently selected user
+let decks = [];         // The player's own decks
+let friends = [];       // The player's friends list
 let activeDeckIndex = -1;
 let isEditing = false;
 let editingDeck = [];
 
-
 /**
  * Maps card data from the backend schema to the schema expected by the CardUI component.
- * @param {object} card The card data from the backend.
- * @returns {object} The mapped card data for the UI.
  */
 function mapCardDataForView(card) {
     if (!card) return null;
     return {
-        // Pass through fields needed by other parts like drag-and-drop
         id: card.id,
-
-        // Map fields for CardUI component
         name: card.name,
         acqNumber: card.number,
         imageUrl: card.image,
@@ -32,126 +28,145 @@ function mapCardDataForView(card) {
     };
 }
 
-
 /**
- * Central UI update function. Renders the available cards in the collection
- * and the current state of the deck being edited, ensuring they are always in sync.
+ * Central UI update function for deck editing.
+ * Renders available cards and the deck being edited.
  */
 function refreshEditView() {
     if (!isEditing) return;
 
-    // Create a Set of card IDs currently in the deck for efficient lookup.
     const editingDeckCardIds = new Set(editingDeck.filter(id => id));
-
-    // Filter the main inventory to get only cards that are NOT in the deck.
     const availableInventory = fullInventory.filter(card => !editingDeckCardIds.has(card.id));
-
-    // Map the data for the view before rendering
     const mappedInventory = availableInventory.map(mapCardDataForView);
 
-    // Re-render the collection view with the filtered list of available cards.
+    // Rebuild dropdown HTML to persist it while disabled during editing
+    let ownerOptions = `<option value="@me" selected>My Collection</option>`;
+    ownerOptions += friends.map(friend => `<option value="${friend._id}">${friend.displayName}</option>`).join('');
+    const headerDropdownHTML = `
+        <div class="collection-owner-controls" style="padding-bottom: 1rem;">
+            <label for="collection-owner-select" style="margin-right: 0.5rem;">Viewing:</label>
+            <select id="collection-owner-select" class="form-input" disabled>${ownerOptions}</select>
+        </div>`;
+
     renderCollectionView(document.getElementById('collection-view-wrapper'), mappedInventory, {
         title: 'My Collection',
+        headerHTML: headerDropdownHTML,
         cardOptions: { isDraggable: true }
     });
 
-    // Re-attach event listeners to the newly rendered collection cards.
     attachDragListenersToInventory();
     attachRightClickListenersToInventory();
-
-    // Re-render the deck hotbar to show the latest changes.
     renderDeckHotbar();
 }
 
 /**
  * Main function to render the inventory and deck building view.
  * @param {HTMLElement} container The element to render the view into.
+ * @param {object} [initialOwner] The owner to display initially.
  */
-export async function renderInventoryView(container) {
+export async function renderInventoryView(container, initialOwner = { userId: '@me', userName: 'My Collection' }) {
     container.innerHTML = `
         <div class="inventory-layout">
-            <div class="deck-builder-section">
+            <div id="deck-builder-section" class="deck-builder-section">
                 <h1>Deck Builder</h1>
                 <div id="deck-controls" class="deck-controls"></div>
                 <div id="deck-hotbar" class="deck-hotbar"></div>
             </div>
-            <div id="collection-view-wrapper" class="inventory-section">
-                <!-- The Collection View will be rendered here -->
-            </div>
+            <div id="collection-view-wrapper" class="inventory-section"></div>
         </div>
         <div id="card-context-menu" class="card-context-menu" style="display: none;"></div>
     `;
-
-    // Attach event listeners ONCE using event delegation on a stable parent.
-    const layout = container.querySelector('.inventory-layout');
-    if (layout) {
-        layout.addEventListener('click', (e) => {
-            if (e.target.id === 'edit-deck-btn') toggleEditMode();
-            if (e.target.id === 'save-deck-btn') handleSaveDeck();
-        });
-        layout.addEventListener('change', (e) => {
-            if (e.target.id === 'deck-select' && !isEditing) {
-                activeDeckIndex = parseInt(e.target.value, 10);
-                renderDeckHotbar();
-            }
-        });
-    }
-
-    // Attach context menu listeners once.
-    document.addEventListener('click', () => { document.getElementById('card-context-menu').style.display = 'none'; });
-    document.getElementById('card-context-menu').addEventListener('click', handleContextMenuAction);
-
-
-    await fetchAndDisplayData();
+    attachMainEventListeners(container);
+    await initializeInventory(initialOwner);
 }
 
 /**
- * Fetches data and renders all parts of the view.
+ * Fetches initial data (friends, user collection) and renders the view.
+ * @param {object} owner The owner to display initially.
  */
-async function fetchAndDisplayData() {
+async function initializeInventory(owner) {
     const wrapper = document.getElementById('collection-view-wrapper');
-    wrapper.innerHTML = `<div class="loader">Loading your collection...</div>`;
-
+    wrapper.innerHTML = `<div class="loader">Loading data...</div>`;
     try {
-        const data = await loadCollectionData('@me');
-        if (data.success) {
-            fullInventory = data.inventory || [];
-            decks = data.decks || [];
-
-            // Map the inventory data to the format the CardUI component expects.
-            const mappedInventory = fullInventory.map(mapCardDataForView);
-
-            // Initial render of the collection view with all cards.
-            renderCollectionView(wrapper, mappedInventory, {
-                title: 'My Collection',
-                cardOptions: { isDraggable: false } // Dragging is disabled by default.
-            });
-
-            if (activeDeckIndex === -1 && decks.length > 0) {
-                activeDeckIndex = 0;
-            }
-            renderDeckControls();
-            renderDeckHotbar();
-
-        } else {
-            wrapper.innerHTML = `<div class="message-box message-error">${data.message}</div>`;
-        }
+        const friendsData = await getFriendsData();
+        if (!friendsData.success) throw new Error(friendsData.message);
+        friends = friendsData.friends || [];
+        await loadAndRenderCollection(owner.userId, owner.userName);
     } catch (error) {
         wrapper.innerHTML = `<div class="message-box message-error">${error.message}</div>`;
     }
 }
 
+/**
+ * Fetches and renders the collection for a specific user.
+ * @param {string} userId The ID of the user whose collection to load ('@me' for self).
+ * @param {string} userName The display name of the user.
+ */
+async function loadAndRenderCollection(userId, userName) {
+    const isOwner = userId === '@me';
+    const wrapper = document.getElementById('collection-view-wrapper');
+    const deckBuilderSection = document.getElementById('deck-builder-section');
+
+    wrapper.innerHTML = `<div class="loader">Loading ${userName}'s collection...</div>`;
+    deckBuilderSection.style.display = isOwner ? '' : 'none';
+
+    try {
+        const data = await loadCollectionData(userId);
+        if (!data.success) throw new Error(data.message);
+
+        fullInventory = data.inventory || [];
+        const mappedInventory = fullInventory.map(mapCardDataForView);
+
+        let ownerOptions = `<option value="@me" ${isOwner ? 'selected' : ''}>My Collection</option>`;
+        ownerOptions += friends.map(friend =>
+            `<option value="${friend._id}" ${userId === friend._id ? 'selected' : ''}>${friend.displayName}</option>`
+        ).join('');
+
+        const headerDropdownHTML = `
+            <div class="collection-owner-controls" style="padding-bottom: 1rem;">
+                <label for="collection-owner-select" style="margin-right: 0.5rem;">Viewing:</label>
+                <select id="collection-owner-select" class="form-input">${ownerOptions}</select>
+            </div>`;
+
+        renderCollectionView(wrapper, mappedInventory, {
+            title: `${userName}'s Collection`,
+            headerHTML: headerDropdownHTML,
+            cardOptions: { isDraggable: isOwner && isEditing }
+        });
+
+        document.getElementById('collection-owner-select').addEventListener('change', handleOwnerChange);
+
+        if (isOwner) {
+            decks = data.decks || [];
+            if (activeDeckIndex === -1 && decks.length > 0) activeDeckIndex = 0;
+            renderDeckControls();
+            renderDeckHotbar();
+        }
+
+    } catch (error) {
+        wrapper.innerHTML = `<div class="message-box message-error">${error.message}</div>`;
+        showNotification(`Error loading collection: ${error.message}`, true);
+    }
+}
+
+
+/**
+ * Renders the deck selection and edit/save buttons, respecting the current edit state.
+ */
 function renderDeckControls() {
     const controlsContainer = document.getElementById('deck-controls');
     if (!controlsContainer) return;
     const deckOptions = decks.map((_, index) => `<option value="${index}" ${index === activeDeckIndex ? 'selected' : ''}>Deck ${index + 1}</option>`).join('');
     controlsContainer.innerHTML = `
-        <select id="deck-select" class="form-input">${deckOptions}</select>
+        <select id="deck-select" class="form-input" ${isEditing ? 'disabled' : ''}>${deckOptions}</select>
         <button id="edit-deck-btn" class="btn">${isEditing ? 'Cancel' : 'Edit Deck'}</button>
-        <button id="save-deck-btn" class="btn btn-primary" style="display: none;">Save Deck</button>
+        <button id="save-deck-btn" class="btn btn-primary" style="display: ${isEditing ? 'inline-flex' : 'none'};">Save Deck</button>
     `;
 }
 
+/**
+ * Renders the 10-slot deck hotbar.
+ */
 function renderDeckHotbar() {
     const hotbarContainer = document.getElementById('deck-hotbar');
     if (!hotbarContainer) return;
@@ -161,7 +176,6 @@ function renderDeckHotbar() {
 
     for (let i = 0; i < 10; i++) {
         const cardObjectId = currentDeck[i];
-        // Find card from the original `fullInventory` to get original data structure
         const card = cardObjectId ? fullInventory.find(c => c.id === cardObjectId) : null;
         const slot = document.createElement('div');
         slot.className = 'deck-slot';
@@ -184,38 +198,48 @@ function renderDeckHotbar() {
     }
 }
 
+/**
+ * Toggles the deck editing mode on or off.
+ */
 function toggleEditMode() {
     isEditing = !isEditing;
+    const ownerSelect = document.getElementById('collection-owner-select');
+    if (ownerSelect) ownerSelect.disabled = isEditing;
 
     if (isEditing) {
-        // Entering edit mode: copy the current deck and refresh the view.
         editingDeck = activeDeckIndex > -1 ? [...(decks[activeDeckIndex] || [])] : [];
         refreshEditView();
     } else {
-        // Exiting edit mode: clear the temporary deck and restore the full collection view.
+        // On cancel, just reload our own collection view state without a full refetch
         editingDeck = [];
-        const mappedInventory = fullInventory.map(mapCardDataForView);
-        renderCollectionView(document.getElementById('collection-view-wrapper'), mappedInventory, {
-            title: 'My Collection',
-            cardOptions: { isDraggable: false }
-        });
-        renderDeckHotbar();
+        loadAndRenderCollection('@me', 'My Collection');
     }
 
-    // Update UI controls state.
-    document.getElementById('save-deck-btn').style.display = isEditing ? 'flex' : 'none';
+    // Manually update button states
+    document.getElementById('save-deck-btn').style.display = isEditing ? 'inline-flex' : 'none';
     document.getElementById('deck-select').disabled = isEditing;
     document.getElementById('edit-deck-btn').textContent = isEditing ? 'Cancel' : 'Edit Deck';
 }
 
+/**
+ * Saves the currently edited deck to the server, packing the array to remove empty slots.
+ */
 async function handleSaveDeck() {
+    // Pack the deck array by creating a new, dense array containing only valid card IDs.
+    // This correctly handles sparse arrays that result from removing cards from specific slots.
+    const packedDeck = [];
+    for (const cardId of editingDeck) {
+        if (cardId) {
+            packedDeck.push(cardId);
+        }
+    }
+
     try {
-        // Filter out any empty slots before saving.
-        const data = await saveActiveDeck(activeDeckIndex, editingDeck.filter(id => id));
+        const data = await saveActiveDeck(activeDeckIndex, packedDeck);
         if (data.success) {
             showNotification('Deck saved!');
-            isEditing = false; // Manually exit edit mode before refetching data.
-            await fetchAndDisplayData();
+            isEditing = false;
+            await initializeInventory({ userId: '@me', userName: 'My Collection' });
         } else {
             showNotification(data.message, true);
         }
@@ -224,7 +248,39 @@ async function handleSaveDeck() {
     }
 }
 
-// --- DRAG & DROP AND CONTEXT MENU LOGIC ---
+// --- EVENT HANDLERS & LISTENERS ---
+
+/**
+ * Attaches the main, non-dynamic event listeners for the view.
+ */
+function attachMainEventListeners(container) {
+    container.addEventListener('click', (e) => {
+        if (e.target.id === 'edit-deck-btn') toggleEditMode();
+        if (e.target.id === 'save-deck-btn') handleSaveDeck();
+    });
+    container.addEventListener('change', (e) => {
+        if (e.target.id === 'deck-select' && !isEditing) {
+            activeDeckIndex = parseInt(e.target.value, 10);
+            renderDeckHotbar();
+        }
+    });
+
+    document.addEventListener('click', () => {
+        const menu = document.getElementById('card-context-menu');
+        if (menu) menu.style.display = 'none';
+    });
+    const contextMenu = document.getElementById('card-context-menu');
+    if (contextMenu) contextMenu.addEventListener('click', handleContextMenuAction);
+}
+
+/**
+ * Handles changing the selected user in the collection dropdown.
+ */
+async function handleOwnerChange(e) {
+    const selectedId = e.target.value;
+    const selectedName = e.target.options[e.target.selectedIndex].text;
+    await loadAndRenderCollection(selectedId, selectedName);
+}
 
 function attachDragListenersToInventory() {
     document.querySelectorAll('.card-component[draggable="true"]').forEach(card => {
@@ -257,7 +313,7 @@ function handleCardDrop(e) {
     }
 
     editingDeck[slotIndex] = cardId;
-    refreshEditView(); // Update the entire view.
+    refreshEditView();
 }
 
 function attachRightClickListenersToInventory() {
@@ -305,10 +361,10 @@ function handleContextMenuAction(e) {
         const firstEmptySlot = editingDeck.findIndex(id => !id);
         editingDeck[firstEmptySlot !== -1 ? firstEmptySlot : editingDeck.length] = cardId;
     } else if (action === 'remove') {
-        // Using 'delete' creates a sparse array, which is intended here to keep slot positions stable.
         delete editingDeck[parseInt(slotIndex, 10)];
     }
 
-    refreshEditView(); // Update the entire view.
+    refreshEditView();
     document.getElementById('card-context-menu').style.display = 'none';
 }
+
